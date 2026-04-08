@@ -1,0 +1,14 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/conflict_ack.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CONFLICT_ACK Payload",
+  "type": "object",
+  "required": ["conflict_id", "ack_type"],
+  "properties": {
+    "conflict_id": { "type": "string" },
+    "ack_type": {
+      "type": "string",
+      "enum": ["seen", "accepted", "disputed"]
+    }
+  }
+}

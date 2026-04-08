@@ -1,0 +1,17 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/resolution.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RESOLUTION Payload",
+  "type": "object",
+  "required": ["resolution_id", "conflict_id", "decision", "rationale"],
+  "properties": {
+    "resolution_id": { "type": "string" },
+    "conflict_id": { "type": "string" },
+    "decision": {
+      "type": "string",
+      "enum": ["approved", "rejected", "dismissed", "human_override", "policy_override", "merged"]
+    },
+    "outcome": { "$ref": "../objects/outcome.schema.json" },
+    "rationale": { "type": "string" }
+  }
+}

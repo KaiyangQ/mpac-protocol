@@ -1,0 +1,22 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/protocol_error.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PROTOCOL_ERROR Payload",
+  "type": "object",
+  "required": ["error_code", "description"],
+  "properties": {
+    "error_code": {
+      "type": "string",
+      "enum": [
+        "MALFORMED_MESSAGE", "UNKNOWN_MESSAGE_TYPE", "INVALID_REFERENCE",
+        "VERSION_MISMATCH", "CAPABILITY_UNSUPPORTED", "AUTHORIZATION_FAILED",
+        "PARTICIPANT_UNAVAILABLE", "RESOLUTION_TIMEOUT", "SCOPE_FROZEN", "CLAIM_CONFLICT",
+        "RESOLUTION_CONFLICT", "COORDINATOR_CONFLICT", "STATE_DIVERGENCE",
+        "SESSION_CLOSED", "CREDENTIAL_REJECTED", "REPLAY_DETECTED", "CAUSAL_GAP", "INTENT_BACKOFF",
+        "BACKEND_SWITCH_DENIED"
+      ]
+    },
+    "refers_to": { "type": "string" },
+    "description": { "type": "string" }
+  }
+}

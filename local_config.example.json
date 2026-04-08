@@ -1,0 +1,6 @@
+{
+  "anthropic": {
+    "api_key": "your_key_here",
+    "model": "claude-sonnet-4-6"
+  }
+}

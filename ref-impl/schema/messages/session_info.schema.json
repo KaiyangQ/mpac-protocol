@@ -1,0 +1,48 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/session_info.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SESSION_INFO Payload",
+  "type": "object",
+  "required": ["session_id", "protocol_version", "security_profile", "compliance_profile", "watermark_kind", "execution_model", "state_ref_format", "granted_roles"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "protocol_version": { "type": "string" },
+    "security_profile": { "type": "string", "enum": ["open", "authenticated", "verified"] },
+    "compliance_profile": { "type": "string", "enum": ["core", "governance", "semantic"] },
+    "watermark_kind": { "type": "string" },
+    "execution_model": { "type": "string", "enum": ["pre_commit", "post_commit"] },
+    "state_ref_format": { "type": "string" },
+    "governance_policy": { "type": "object" },
+    "liveness_policy": {
+      "type": "object",
+      "properties": {
+        "heartbeat_interval_sec": { "type": "number" },
+        "unavailability_timeout_sec": { "type": "number" },
+        "orphaned_intent_action": { "type": "string" },
+        "orphaned_proposal_action": { "type": "string" },
+        "intent_claim_approval": { "type": "string" },
+        "intent_claim_grace_period_sec": { "type": "number" },
+        "resolution_timeout_sec": { "type": "number" },
+        "backend_health_policy": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "check_source": { "type": "string", "default": "https://aistatus.cc/api/check" },
+            "check_interval_sec": { "type": "number", "default": 60 },
+            "on_degraded": { "type": "string", "enum": ["ignore", "warn", "suspend_and_claim"], "default": "warn" },
+            "on_down": { "type": "string", "enum": ["ignore", "warn", "suspend_and_claim"], "default": "suspend_and_claim" },
+            "auto_switch": { "type": "string", "enum": ["allowed", "notify_first", "forbidden"], "default": "allowed" },
+            "allowed_providers": { "type": "array", "items": { "type": "string" }, "description": "Whitelist of provider slugs. Configured by the session creator. When absent, any provider is accepted." }
+          },
+          "description": "Backend health monitoring configuration (Section 14.3.1)"
+        }
+      }
+    },
+    "participant_count": { "type": "integer" },
+    "granted_roles": { "type": "array", "items": { "type": "string" } },
+    "identity_verified": { "type": "boolean" },
+    "identity_method": { "type": "string" },
+    "identity_issuer": { "type": "string" },
+    "compatibility_errors": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/conflict_escalate.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CONFLICT_ESCALATE Payload",
+  "type": "object",
+  "required": ["conflict_id", "escalate_to", "reason"],
+  "properties": {
+    "conflict_id": { "type": "string" },
+    "escalate_to": { "type": "string" },
+    "reason": { "type": "string" },
+    "context": { "type": "string" }
+  }
+}

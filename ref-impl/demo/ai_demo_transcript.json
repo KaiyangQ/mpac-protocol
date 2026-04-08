@@ -1,0 +1,376 @@
+[
+  {
+    "direction": "→ coordinator",
+    "label": "Alice HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "d0bfc0e2-9b43-43cb-9714-5a11b3e1062d",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:5f770679-1863-4cc9-b7a2-81e93dceea4f"
+      },
+      "ts": "2026-04-04T21:50:32.697656Z",
+      "payload": {
+        "display_name": "Alice",
+        "roles": [
+          "contributor"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "direction": "← coordinator",
+    "label": "response",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "72a8d857-7cb8-42fb-8306-79d453ef52eb",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "service:coordinator-live-ai-session-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-live-ai-session-001:epoch-1"
+      },
+      "ts": "2026-04-04T21:50:32.697738Z",
+      "payload": {
+        "session_id": "live-ai-session-001",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "core",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 1,
+        "granted_roles": [
+          "contributor"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "direction": "→ coordinator",
+    "label": "Bob HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "d0e11b56-8a9d-4cfb-895b-977c3d344539",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:39b6866b-28c2-42ac-9717-38a81bbd1586"
+      },
+      "ts": "2026-04-04T21:50:32.697774Z",
+      "payload": {
+        "display_name": "Bob",
+        "roles": [
+          "contributor"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "direction": "← coordinator",
+    "label": "response",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "370e9668-fa45-4cc5-8382-77ee37cf96d5",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "service:coordinator-live-ai-session-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-live-ai-session-001:epoch-1"
+      },
+      "ts": "2026-04-04T21:50:32.697805Z",
+      "payload": {
+        "session_id": "live-ai-session-001",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "core",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 2,
+        "granted_roles": [
+          "contributor"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "direction": "→ coordinator",
+    "label": "Alice intent",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "a9a21865-be69-4016-80c7-809bbf71c55e",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:5f770679-1863-4cc9-b7a2-81e93dceea4f"
+      },
+      "ts": "2026-04-04T21:50:35.421916Z",
+      "payload": {
+        "intent_id": "intent-alice-auth-security-fixes",
+        "objective": "Fix critical authentication security vulnerabilities including token expiry validation and middleware logic duplication",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "src/auth.py",
+            "src/auth_middleware.py"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "direction": "→ coordinator",
+    "label": "Bob intent",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "3821d10d-9351-4af6-9509-ea5661818108",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:39b6866b-28c2-42ac-9717-38a81bbd1586"
+      },
+      "ts": "2026-04-04T21:50:37.367257Z",
+      "payload": {
+        "intent_id": "intent-bob-refactor-user-model",
+        "objective": "Complete the User model by adding missing email uniqueness constraint and other necessary fields/methods",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "src/models.py"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "direction": "→ coordinator",
+    "label": "Alice commit",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_COMMIT",
+      "message_id": "6ea3192a-73d4-482b-a703-3b83ef0cb2fb",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:5f770679-1863-4cc9-b7a2-81e93dceea4f"
+      },
+      "ts": "2026-04-04T21:50:42.619424Z",
+      "payload": {
+        "op_id": "op-alice-token-validation",
+        "intent_id": "intent-alice-auth-security-fixes",
+        "target": "src/auth.py",
+        "op_kind": "replace",
+        "state_ref_before": "sha256:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+        "state_ref_after": "sha256:b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a1"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "direction": "→ coordinator",
+    "label": "Bob commit",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_COMMIT",
+      "message_id": "fe026664-3951-41db-a051-10a5444c1510",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:39b6866b-28c2-42ac-9717-38a81bbd1586"
+      },
+      "ts": "2026-04-04T21:50:45.031888Z",
+      "payload": {
+        "op_id": "op-bob-complete-user-model",
+        "intent_id": "intent-bob-refactor-user-model",
+        "target": "src/models.py",
+        "op_kind": "replace",
+        "state_ref_before": "hash-models-incomplete-user",
+        "state_ref_after": "hash-models-complete-user"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "direction": "→ coordinator",
+    "label": "Alice OP_SUPERSEDE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_SUPERSEDE",
+      "message_id": "99bb0c7f-aed3-4677-9d5b-91201f8bbedd",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:5f770679-1863-4cc9-b7a2-81e93dceea4f"
+      },
+      "ts": "2026-04-04T21:50:45.031992Z",
+      "payload": {
+        "op_id": "op-alice-token-validation-v2",
+        "supersedes_op_id": "op-alice-token-validation",
+        "target": "src/auth.py",
+        "intent_id": "intent-alice-auth-security-fixes",
+        "reason": "revised_approach",
+        "state_ref_after": "sha256:op-alice-revised"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  },
+  {
+    "direction": "← coordinator",
+    "label": "coordinator_status",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "COORDINATOR_STATUS",
+      "message_id": "19d4ee93-689f-4c8f-b61f-372c75384290",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "service:coordinator-live-ai-session-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-live-ai-session-001:epoch-1"
+      },
+      "ts": "2026-04-04T21:50:45.032046Z",
+      "payload": {
+        "event": "heartbeat",
+        "coordinator_id": "service:coordinator-live-ai-session-001",
+        "session_health": "healthy",
+        "active_participants": 2,
+        "open_conflicts": 0,
+        "snapshot_lamport_clock": 10
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 11
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "direction": "← coordinator",
+    "label": "session_close",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_CLOSE",
+      "message_id": "a5e25566-a405-4e69-ba53-a8000a50b204",
+      "session_id": "live-ai-session-001",
+      "sender": {
+        "principal_id": "service:coordinator-live-ai-session-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-live-ai-session-001:epoch-1"
+      },
+      "ts": "2026-04-04T21:50:45.032228Z",
+      "payload": {
+        "reason": "completed",
+        "final_lamport_clock": 11,
+        "summary": {
+          "total_intents": 2,
+          "total_operations": 3,
+          "total_conflicts": 0,
+          "total_participants": 2,
+          "duration_sec": 12
+        },
+        "active_intents_disposition": "withdraw_all"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 12
+      },
+      "coordinator_epoch": 1
+    }
+  }
+]

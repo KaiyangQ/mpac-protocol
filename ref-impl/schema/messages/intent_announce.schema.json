@@ -1,0 +1,17 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/intent_announce.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "INTENT_ANNOUNCE Payload",
+  "type": "object",
+  "required": ["intent_id", "objective", "scope"],
+  "properties": {
+    "intent_id": { "type": "string" },
+    "objective": { "type": "string" },
+    "scope": { "$ref": "../objects/scope.schema.json" },
+    "assumptions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "priority": { "type": "string", "enum": ["low", "normal", "high", "critical"], "default": "normal" },
+    "ttl_sec": { "type": "integer", "default": 300 },
+    "parent_intent_id": { "type": "string" },
+    "supersedes_intent_id": { "type": "string" }
+  }
+}

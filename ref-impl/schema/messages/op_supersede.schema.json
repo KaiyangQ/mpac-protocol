@@ -1,0 +1,16 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/op_supersede.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OP_SUPERSEDE Payload",
+  "type": "object",
+  "required": ["op_id", "supersedes_op_id", "target"],
+  "properties": {
+    "op_id": { "type": "string" },
+    "supersedes_op_id": { "type": "string" },
+    "intent_id": { "type": "string" },
+    "target": { "type": "string" },
+    "op_kind": { "type": "string" },
+    "reason": { "type": "string" },
+    "state_ref_after": { "type": "string" }
+  }
+}

@@ -3,6 +3,7 @@ MPAC Agent — autonomous AI agent that coordinates via MPAC protocol.
 
 Connects to an MPACServer, reads shared workspace files, uses Claude to
 decide what to work on, and commits changes through the protocol.
+Content-agnostic: works with code, documents, config files, or any text.
 """
 from __future__ import annotations
 
@@ -93,19 +94,25 @@ class MPACAgent:
         name: str,
         api_key: str,
         model: str = "claude-sonnet-4-6",
-        role_description: str = "A collaborative AI coding agent",
+        role_description: str | None = None,
+        roles: list[str] | None = None,
+        principal_id: str | None = None,
     ):
         self.name = name
-        self.principal_id = f"agent:{name}"
-        self.role_description = role_description
+        self.principal_id = principal_id or f"agent:{name}"
+        self.role_description = role_description or "A collaborative AI agent"
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
         self.participant = Participant(
             principal_id=self.principal_id,
             principal_type="agent",
             display_name=name,
-            roles=["contributor"],
-            capabilities=["intent.broadcast", "op.propose", "op.commit"],
+            roles=roles or ["contributor"],
+            capabilities=[
+                "intent.broadcast", "op.propose", "op.commit",
+                "intent.update", "intent.withdraw", "intent.claim",
+                "conflict.ack", "conflict.escalate", "governance.override",
+            ],
         )
         self.ws = None
         self.session_id = None
@@ -114,6 +121,7 @@ class MPACAgent:
         self._listener_task = None
         self._event_printer_task = None
         self.conflicts_received: list[dict] = []
+        self._recent_withdraws: list[dict] = []
         self.log = logging.getLogger(f"mpac.agent.{name}")
 
     # ── WebSocket communication ────────────────────────────────
@@ -172,8 +180,36 @@ class MPACAgent:
             principal = payload.get("principal", {})
             name = principal.get("display_name", sender)
             print(f"\n  >> {name} joined the session")
+        elif mt == "INTENT_WITHDRAW":
+            reason = payload.get("reason", "?")
+            intent_id = payload.get("intent_id", "?")
+            print(f"\n  >> {sender} withdrew intent ({reason})")
+            # Track for mutual-yield detection
+            self._recent_withdraws.append({
+                "sender": sender, "intent_id": intent_id, "reason": reason,
+            })
         elif mt == "GOODBYE":
             print(f"\n  >> {sender} left the session")
+        elif mt == "CONFLICT_ACK":
+            ack_type = payload.get("ack_type", "?")
+            print(f"\n  >> {sender} acknowledged conflict ({ack_type})")
+        elif mt == "CONFLICT_ESCALATE":
+            escalate_to = payload.get("escalate_to", "?")
+            print(f"\n  >> Conflict escalated to {escalate_to}")
+        elif mt == "RESOLUTION":
+            decision = payload.get("decision", "?")
+            print(f"\n  >> Conflict resolved: {decision}")
+        elif mt == "INTENT_UPDATE":
+            print(f"\n  >> {sender} updated intent scope")
+        elif mt == "INTENT_CLAIM_STATUS":
+            decision = payload.get("decision", "?")
+            print(f"\n  >> Claim decision: {decision}")
+        elif mt == "OP_PROPOSE":
+            target = payload.get("target", "?")
+            print(f"\n  >> {sender} proposed operation on {target}")
+        elif mt == "OP_REJECT":
+            reason = payload.get("reason", "?")
+            print(f"\n  >> Operation rejected: {reason}")
 
     async def _send(self, data: dict):
         """Send JSON over WebSocket."""
@@ -281,10 +317,10 @@ class MPACAgent:
             f"  - {f['path']} ({f['size']} bytes, ref: {f['state_ref']})"
             for f in files_info
         )
-        system = f"""You are {self.name}, an AI coding agent. {self.role_description}
+        system = f"""You are {self.name}, a collaborative AI agent. {self.role_description}
 
 You participate in MPAC (Multi-Principal Agent Coordination Protocol).
-Decide which files you need to modify for the given task.
+Analyze the task and decide which workspace files you need to modify.
 
 Reply with ONLY a JSON object:
 {{
@@ -324,10 +360,10 @@ YOUR INTENT:
 
     def _generate_fix(self, task: str, path: str, content: str,
                       other_agent_info: str = "") -> str:
-        system = f"""You are {self.name}, an AI coding agent. {self.role_description}
+        system = f"""You are {self.name}, a collaborative AI agent. {self.role_description}
 
-You are given a Python source file. Fix it according to the objective.
-Return ONLY the complete fixed file — no markdown fences, no explanations."""
+You are given a file and an objective. Update the file according to the objective.
+Return ONLY the complete updated file — no markdown fences, no explanations."""
 
         coordination = ""
         if other_agent_info:
@@ -343,7 +379,7 @@ FILE: {path}
 CURRENT CONTENT:
 {content}
 
-Return the complete fixed Python file."""
+Return the complete updated file."""
 
         result = self._ask_claude(system, user, max_tokens=4096)
         result = self._extract_code(result)
@@ -351,25 +387,24 @@ Return the complete fixed Python file."""
 
     @staticmethod
     def _extract_code(text: str) -> str:
-        """Extract code from Claude response, stripping markdown fences and explanations."""
-        # Find the last ```-fenced code block (most likely the complete file)
+        """Extract content from Claude response, stripping markdown fences if present.
+
+        For code files: finds the longest fenced code block.
+        For non-code content (no fences found): returns the text as-is.
+        """
         import re
+        # Find any ```-fenced block (language tag is optional)
         blocks = list(re.finditer(
-            r"```(?:python|py)?\s*\n(.*?)```",
+            r"```(?:\w+)?\s*\n(.*?)```",
             text, re.DOTALL,
         ))
         if blocks:
-            # Use the last (or longest) fenced block — that's the full file
+            # Use the longest fenced block — that's the complete file
             best = max(blocks, key=lambda m: len(m.group(1)))
             return best.group(1).rstrip("\n")
 
-        # No fenced block — strip a leading ``` line and trailing ``` if present
-        lines = text.split("\n")
-        if lines and lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        return "\n".join(lines)
+        # No fenced block — return text as-is (common for non-code content)
+        return text.strip()
 
     # ── MPAC message helpers ───────────────────────────────────
 
@@ -383,7 +418,16 @@ Return the complete fixed Python file."""
         return resp
 
     async def _do_announce_intent(self, intent: dict):
-        scope = Scope(kind="file_set", resources=intent.get("files", []))
+        scope_kind = intent.get("scope_kind", "file_set")
+        items = intent.get("resources", intent.get("files", []))
+        scope_kwargs = {"kind": scope_kind}
+        if scope_kind == "task_set":
+            scope_kwargs["task_ids"] = items
+        elif scope_kind == "entity_set":
+            scope_kwargs["entities"] = items
+        else:
+            scope_kwargs["resources"] = items
+        scope = Scope(**scope_kwargs)
         msg = self.participant.announce_intent(
             self.session_id,
             intent["intent_id"],
@@ -430,6 +474,143 @@ Return the complete fixed Python file."""
     async def _do_goodbye(self):
         msg = self.participant.goodbye(self.session_id, reason="completed")
         await self._send(msg)
+
+    # ── Extended protocol operations ──────────────────────────
+
+    async def do_heartbeat(self, status: str = "idle"):
+        """Send HEARTBEAT to maintain liveness."""
+        msg = self.participant.heartbeat(self.session_id, status=status)
+        await self._send(msg)
+
+    async def do_ack_conflict(self, conflict_id: str, ack_type: str = "seen"):
+        """Send CONFLICT_ACK."""
+        msg = self.participant.ack_conflict(self.session_id, conflict_id, ack_type)
+        await self._send(msg)
+        await asyncio.sleep(0.3)
+
+    async def do_update_intent(self, intent_id: str, objective: str | None = None,
+                                files: list[str] | None = None):
+        """Send INTENT_UPDATE to change scope or objective."""
+        scope = Scope(kind="file_set", resources=files) if files else None
+        msg = self.participant.update_intent(
+            self.session_id, intent_id, objective=objective, scope=scope,
+        )
+        await self._send(msg)
+        await asyncio.sleep(0.3)
+
+    async def do_propose(self, intent_id: str, op_id: str, target: str,
+                          op_kind: str = "replace") -> dict | None:
+        """Send OP_PROPOSE and wait for authorization (pre-commit mode).
+
+        Returns the authorization response, OP_REJECT, or None on timeout.
+        """
+        msg = self.participant.propose_op(
+            self.session_id, op_id, intent_id, target, op_kind,
+        )
+        await self._send(msg)
+
+        deadline = time.time() + 15.0
+        stash = []
+        while time.time() < deadline:
+            try:
+                remaining = max(0.1, deadline - time.time())
+                msg = await asyncio.wait_for(
+                    self.protocol_inbox.get(), timeout=remaining)
+                msg_type = msg.get("message_type", "")
+                if msg_type == "COORDINATOR_STATUS":
+                    event = msg.get("payload", {}).get("event", "")
+                    if event == "authorization":
+                        self.log.info(f"OP_PROPOSE authorized: {op_id}")
+                        for s in stash:
+                            await self.protocol_inbox.put(s)
+                        return msg
+                elif msg_type in ("OP_REJECT", "PROTOCOL_ERROR"):
+                    self.log.info(f"OP_PROPOSE {msg_type}: "
+                                  f"{msg.get('payload', {}).get('reason', msg.get('payload', {}).get('error_code', '?'))}")
+                    for s in stash:
+                        await self.protocol_inbox.put(s)
+                    return msg
+                elif msg_type == "CONFLICT_REPORT":
+                    self.conflicts_received.append(msg)
+                else:
+                    stash.append(msg)
+            except asyncio.TimeoutError:
+                continue
+        for s in stash:
+            await self.protocol_inbox.put(s)
+        return None
+
+    async def propose_and_commit(self, intent_id: str, op_id: str, target: str,
+                                  content: str, state_ref_before: str) -> bool:
+        """Pre-commit flow: OP_PROPOSE → authorization → OP_COMMIT.
+
+        Returns True if committed successfully.
+        """
+        auth = await self.do_propose(intent_id, op_id, target)
+        if auth is None or auth.get("message_type") != "COORDINATOR_STATUS":
+            return False
+        return await self._do_commit(intent_id, op_id, target, content, state_ref_before)
+
+    async def do_claim_intent(self, original_intent_id: str,
+                               original_principal_id: str,
+                               new_intent_id: str, objective: str,
+                               files: list[str],
+                               justification: str | None = None) -> dict | None:
+        """Send INTENT_CLAIM and wait for INTENT_CLAIM_STATUS.
+
+        Returns the claim status response, or None on timeout.
+        """
+        claim_id = f"claim-{self.name.lower()}-{uuid.uuid4().hex[:6]}"
+        scope = Scope(kind="file_set", resources=files)
+        msg = self.participant.claim_intent(
+            self.session_id, claim_id, original_intent_id,
+            original_principal_id, new_intent_id, objective, scope,
+            justification=justification,
+        )
+        await self._send(msg)
+
+        deadline = time.time() + 15.0
+        stash = []
+        while time.time() < deadline:
+            try:
+                remaining = max(0.1, deadline - time.time())
+                msg = await asyncio.wait_for(
+                    self.protocol_inbox.get(), timeout=remaining)
+                msg_type = msg.get("message_type", "")
+                if msg_type == "INTENT_CLAIM_STATUS":
+                    decision = msg.get("payload", {}).get("decision", "?")
+                    self.log.info(f"INTENT_CLAIM decision: {decision}")
+                    for s in stash:
+                        await self.protocol_inbox.put(s)
+                    return msg
+                elif msg_type == "CONFLICT_REPORT":
+                    self.conflicts_received.append(msg)
+                else:
+                    stash.append(msg)
+            except asyncio.TimeoutError:
+                continue
+        for s in stash:
+            await self.protocol_inbox.put(s)
+        return None
+
+    async def do_escalate_conflict(self, conflict_id: str, escalate_to: str,
+                                    reason: str, context: str | None = None):
+        """Send CONFLICT_ESCALATE to refer a dispute to an arbiter."""
+        msg = self.participant.escalate_conflict(
+            self.session_id, conflict_id, escalate_to, reason, context=context,
+        )
+        await self._send(msg)
+        await asyncio.sleep(0.5)
+
+    async def do_resolve_conflict(self, conflict_id: str, decision: str,
+                                   rationale: str, outcome: dict | None = None):
+        """Send RESOLUTION (typically from an arbiter)."""
+        msg = self.participant.resolve_conflict(
+            self.session_id, conflict_id, decision,
+            rationale=rationale, outcome=outcome,
+        )
+        await self._send(msg)
+        await asyncio.sleep(0.5)
 
     # ── Interactive workflow ───────────────────────────────────
 
@@ -498,10 +679,11 @@ Return the complete fixed Python file."""
         print(f"\n  {self.name} leaving session...")
         await self._do_goodbye()
 
-    async def _run_task_interactive(self, task: str, files: list[dict]):
+    async def _run_task_interactive(self, task: str, files: list[dict],
+                                    _is_retry: bool = False):
         """Run a task with full visual feedback."""
 
-        _header(f"Task: {task}")
+        _header(f"Task: {task}{' (retry — will proceed on conflict)' if _is_retry else ''}")
 
         # Clear any stale conflicts from previous tasks
         self.conflicts_received = []
@@ -536,6 +718,8 @@ Return the complete fixed Python file."""
         print("         Waiting for other agents (5 seconds)...")
         await self._drain_conflicts(5.0)
 
+        self._recent_withdraws = []
+
         if self.conflicts_received:
             print(f"\n  CONFLICT with another agent!")
             for c in self.conflicts_received:
@@ -543,16 +727,31 @@ Return the complete fixed Python file."""
                 print(f"    Category: {cp.get('category', '?')}")
                 print(f"    Between: {cp.get('intent_a', '?')} vs {cp.get('intent_b', '?')}")
 
-                decision = await asyncio.get_event_loop().run_in_executor(
-                    None, self._decide_conflict, cp, intent
-                )
-                print(f"    Decision: {decision}")
+                if _is_retry:
+                    decision = "proceed"
+                    print(f"    Decision: proceed (retry after mutual yield)")
+                else:
+                    decision = await asyncio.get_event_loop().run_in_executor(
+                        None, self._decide_conflict, cp, intent
+                    )
+                    print(f"    Decision: {decision}")
                 if decision == "yield":
                     print("  Yielding to other agent. Task cancelled.")
                     msg = self.participant.withdraw_intent(
                         self.session_id, intent["intent_id"], "yielded"
                     )
                     await self._send(msg)
+
+                    # Detect mutual yield
+                    if not _is_retry:
+                        print("  Checking if other agent also yielded...")
+                        await asyncio.sleep(3.0)
+                        if self._recent_withdraws:
+                            print("  Both agents yielded! Retrying with proceed...")
+                            self.conflicts_received = []
+                            return await self._run_task_interactive(
+                                task, files, _is_retry=True)
+
                     return
             print("  Proceeding — coordinator will resolve.")
         else:
@@ -626,59 +825,74 @@ Return the complete fixed Python file."""
 
     # ── Original autonomous workflow (still available) ─────────
 
-    async def run_task(self, task: str):
-        """Run a complete autonomous task (non-interactive)."""
-        self.log.info(f"=== {self.name} starting task: {task} ===")
+    async def execute_task(self, task: str, _is_retry: bool = False) -> dict:
+        """Execute a single task within an established session (no HELLO/GOODBYE).
 
-        self.log.info("Phase 1: Joining session...")
-        await self._do_hello()
+        Returns a result dict with keys: committed (list of files), yielded (bool),
+        conflict_detected (bool).  Use this for multi-task sequences where agents
+        stay connected across tasks.
+        """
+        result = {"committed": [], "yielded": False, "conflict_detected": False}
 
-        self.log.info("Phase 2: Reading workspace...")
+        self.log.info(f"--- {self.name} task: {task} ---")
+        self._recent_withdraws = []
+
         files = await self.list_files()
-        for f in files:
-            self.log.info(f"  {f['path']} ({f['size']} bytes)")
 
-        self.log.info("Phase 3: Deciding intent (calling Claude)...")
         intent = await asyncio.get_event_loop().run_in_executor(
             None, self._decide_intent, task, files
         )
         self.log.info(f"  Intent: {intent.get('objective', '?')}")
 
-        self.log.info("Phase 4: Announcing intent...")
         await self._do_announce_intent(intent)
 
-        self.log.info("Phase 5: Waiting for conflicts (5s)...")
         await self._drain_conflicts(5.0)
 
         if self.conflicts_received:
+            result["conflict_detected"] = True
             self.log.info(f"  {len(self.conflicts_received)} conflict(s) detected!")
             for c in self.conflicts_received:
-                decision = await asyncio.get_event_loop().run_in_executor(
-                    None, self._decide_conflict, c.get("payload", {}), intent
-                )
-                self.log.info(f"  Decision: {decision}")
+                # On retry after mutual yield, bias toward proceed
+                if _is_retry:
+                    decision = "proceed"
+                    self.log.info("  Decision: proceed (retry after mutual yield)")
+                else:
+                    decision = await asyncio.get_event_loop().run_in_executor(
+                        None, self._decide_conflict, c.get("payload", {}), intent
+                    )
+                    self.log.info(f"  Decision: {decision}")
                 if decision == "yield":
                     msg = self.participant.withdraw_intent(
                         self.session_id, intent["intent_id"], "yielded"
                     )
                     await self._send(msg)
-                    await self._do_goodbye()
-                    return
+
+                    # Detect mutual yield: wait briefly for the other agent's withdraw
+                    if not _is_retry:
+                        self.log.info("  Waiting to check for mutual yield...")
+                        await asyncio.sleep(3.0)
+                        if self._recent_withdraws:
+                            self.log.info("  Mutual yield detected — retrying with proceed bias")
+                            self.conflicts_received = []
+                            return await self.execute_task(task, _is_retry=True)
+
+                    result["yielded"] = True
+                    self.conflicts_received = []
+                    return result
             self.log.info("  Proceeding — coordinator will auto-resolve.")
         else:
             self.log.info("  No conflicts.")
 
-        self.log.info("Phase 6: Generating fixes and committing...")
         target_files = intent.get("files", [])
         max_rebase = 2
 
         for target in target_files:
             for attempt in range(max_rebase + 1):
-                result = await self.read_file(target)
-                if result is None:
+                file_result = await self.read_file(target)
+                if file_result is None:
                     self.log.warning(f"  File not found: {target}")
                     break
-                content, state_ref = result
+                content, state_ref = file_result
                 label = f" (rebase #{attempt})" if attempt > 0 else ""
                 self.log.info(f"  Reading {target}{label} ref={state_ref}")
 
@@ -687,25 +901,45 @@ Return the complete fixed Python file."""
                     rebase_note = ("\nIMPORTANT: Another agent already modified this file. "
                                    "Build on top of their changes.")
 
-                self.log.info(f"  Calling Claude to fix {target}...")
+                self.log.info(f"  Calling Claude to update {target}...")
                 fixed = await asyncio.get_event_loop().run_in_executor(
                     None, self._generate_fix, task + rebase_note, target, content
                 )
 
-                op_id = f"op-{self.name.lower()}-{target.replace('/', '-').replace('.', '-')}"
-                if attempt > 0:
-                    op_id += f"-r{attempt}"
+                op_id = f"op-{self.name.lower()}-{target.replace('/', '-').replace('.', '-')}-{uuid.uuid4().hex[:6]}"
 
                 ok = await self._do_commit(intent["intent_id"], op_id, target, fixed, state_ref)
                 if ok:
                     self.log.info(f"  COMMITTED: {target}")
+                    result["committed"].append(target)
                     break
                 elif attempt < max_rebase:
                     self.log.info(f"  Rebasing {target}...")
                 else:
                     self.log.error(f"  Failed to commit {target} after {max_rebase} rebases")
 
-        self.log.info("Phase 7: Done!")
+        # Withdraw intent — release the scope for future tasks
+        try:
+            msg = self.participant.withdraw_intent(
+                self.session_id, intent["intent_id"], "task_completed"
+            )
+            await self._send(msg)
+        except Exception:
+            pass
+        self.conflicts_received = []
+
+        self.log.info(f"--- {self.name} task done (committed: {result['committed']}) ---")
+        return result
+
+    async def run_task(self, task: str):
+        """Run a complete autonomous task (non-interactive).
+
+        Handles full lifecycle: HELLO → execute_task → GOODBYE.
+        For multi-task sequences, use execute_task() directly.
+        """
+        self.log.info(f"=== {self.name} starting task: {task} ===")
+        await self._do_hello()
+        await self.execute_task(task)
         await self._do_goodbye()
         self.log.info(f"=== {self.name} completed ===")
 

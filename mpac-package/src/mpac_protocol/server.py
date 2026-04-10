@@ -219,6 +219,8 @@ class MPACServer:
                 )
                 if not rejected and msg_type in (
                     "OP_COMMIT", "INTENT_ANNOUNCE", "INTENT_WITHDRAW",
+                    "INTENT_UPDATE", "CONFLICT_ACK",
+                    "CONFLICT_ESCALATE", "RESOLUTION",
                 ):
                     broadcast_msg = json.loads(json.dumps(data))
                     # Strip bulky file content from OP_COMMIT before broadcast

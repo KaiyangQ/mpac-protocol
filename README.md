@@ -96,6 +96,22 @@ python run.py ws://<host-ip>:8766    # use the URL the host printed
 
 LAN and ngrok modes, custom workspace directories, and troubleshooting are all covered in [`examples/two_machine_demo/README.md`](./examples/two_machine_demo/README.md). You can point `--workspace` at any directory you want to share — the pip package does not bundle any workspace files of its own.
 
+### MPACAgent API
+
+The pip package exposes the full MPAC protocol through `MPACAgent`:
+
+| Method | Protocol Feature |
+|--------|-----------------|
+| `execute_task(task)` | Full autonomous workflow: intent → conflict check → fix → commit |
+| `do_propose(intent_id, op_id, target)` | Pre-commit authorization (OP_PROPOSE → COORDINATOR_STATUS) |
+| `propose_and_commit(...)` | Complete pre-commit flow (propose → auth → commit) |
+| `do_claim_intent(...)` | Fault recovery: take over a crashed agent's suspended intent |
+| `do_escalate_conflict(...)` | Escalate a dispute to a designated arbiter |
+| `do_resolve_conflict(...)` | Arbiter renders a binding resolution |
+| `do_ack_conflict(...)` | Acknowledge or dispute a conflict |
+
+Agents support custom `roles` (owner, arbiter, contributor) and content-agnostic operation (code, documents, config files, or any text).
+
 ### Read the Spec
 
 The full protocol specification lives in [SPEC.md](./SPEC.md) — 30 sections covering all five layers, security profiles, compliance profiles, coordinator fault tolerance, session lifecycle, consistency model, execution model, and cross-lifecycle state machine rules with normative transition tables.

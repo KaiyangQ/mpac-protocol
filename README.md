@@ -49,7 +49,7 @@ ref-impl/
     objects/                     ← 4 shared object schemas (Watermark, Scope, Basis, Outcome)
   python/                        ← Python reference implementation
     mpac/                        ← 8 core modules
-    tests/                       ← 11 test files (122 test cases)
+    tests/                       ← 12 test files (122 test cases)
   typescript/                    ← TypeScript reference implementation
     src/                         ← 8 source files
     tests/                       ← 11 test files (101 test cases)

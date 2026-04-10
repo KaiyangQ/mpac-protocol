@@ -1,17 +1,49 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mpac-protocol"
 version = "0.1.0"
-description = "MPAC (Multi-Principal Agent Coordination Protocol) — coordinate multiple AI agents on shared tasks"
+description = "MPAC (Multi-Principal Agent Coordination Protocol) — coordinate multiple AI agents serving different principals over shared state"
+readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "Apache-2.0"}
+authors = [
+    {name = "Kaiyang Qian", email = "kaiyang.2.qian@ucdenver.edu"},
+]
+keywords = [
+    "mpac", "multi-agent", "agent-coordination", "ai-agents",
+    "llm", "claude", "protocol", "coordination", "mcp", "a2a",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Distributed Computing",
+]
 dependencies = [
     "websockets>=12.0",
     "anthropic>=0.40.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/KaiyangQ/Agent_talking"
+Repository = "https://github.com/KaiyangQ/Agent_talking"
+"Release branch" = "https://github.com/KaiyangQ/Agent_talking/tree/opensource"
+Specification = "https://github.com/KaiyangQ/Agent_talking/blob/opensource/SPEC.md"
+"Two-machine demo" = "https://github.com/KaiyangQ/Agent_talking/tree/opensource/examples/two_machine_demo"
+Issues = "https://github.com/KaiyangQ/Agent_talking/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

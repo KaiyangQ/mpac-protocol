@@ -1,5 +1,7 @@
 # MPAC — Multi-Principal Agent Coordination Protocol
 
+> **You're on the public release branch.** This is a curated snapshot of MPAC v0.1.13 — protocol specification, two reference implementations, the pip-installable `mpac_protocol` package, and a worked two-machine collaboration example under [`examples/two_machine_demo/`](./examples/two_machine_demo/). Active development happens on the [`main`](https://github.com/KaiyangQ/Agent_talking/tree/main) branch.
+
 **When multiple AI agents — serving different people — need to work together, who coordinates them?**
 
 MPAC is an application-layer protocol that provides coordination semantics for AI agents serving **multiple independent principals**. It handles the gap that MCP (tool invocation) and A2A (single-principal delegation) don't cover: structured coordination across organizational and trust boundaries.
@@ -31,9 +33,15 @@ The protocol defines 21 message types, 3 state machines with normative transitio
 ```
 SPEC.md                          ← Protocol specification (source of truth)
 MPAC_Developer_Reference.md      ← Developer reference: data dictionary, state machines, enums
-MPAC_v0.1.3_Audit_Report.md      ← Five-dimension audit report (informed v0.1.4 revision)
 blog/
   introducing-mpac.md            ← Introduction article for external audience
+mpac-package/                    ← Pip-installable mpac_protocol package (MPACServer + MPACAgent)
+mpac-starter-kit.zip             ← Wheel + run.py + README, ready to hand to a collaborator
+examples/
+  two_machine_demo/              ← End-to-end example: two people on two computers
+    host/                        ← Coordinator + interactive Alice agent
+    guest/                       ← Bob agent that joins from another machine
+    README.md                    ← LAN and ngrok walkthrough
 ref-impl/
   schema/                        ← JSON Schema (wire format definitions, Draft 2020-12)
     envelope.schema.json         ← oneOf dispatcher: validates payload per message_type
@@ -62,12 +70,31 @@ ref-impl/
       family_trip_transcript.json ← Full transcript from the family-trip run
       test_project/src/          ← 5 Python files with intentional bugs for agents to fix
 version_history/                 ← Protocol evolution: archived versions, changelogs, reviews
-daily_reports/                   ← Development logs
 ```
 
 ---
 
 ## Quick Start
+
+### Try the two-machine demo (recommended first stop)
+
+If you want to feel what MPAC actually does — two people on two different computers, each running their own Claude-backed agent, coordinating live over a shared workspace — start here:
+
+```bash
+pip install ./mpac-package
+
+# Host machine
+cd examples/two_machine_demo/host
+cp config.example.json config.json   # then add your Anthropic API key
+python run.py                        # prints the WebSocket URL to share
+
+# Guest machine
+cd examples/two_machine_demo/guest
+cp config.example.json config.json
+python run.py ws://<host-ip>:8766    # use the URL the host printed
+```
+
+LAN and ngrok modes, custom workspace directories, and troubleshooting are all covered in [`examples/two_machine_demo/README.md`](./examples/two_machine_demo/README.md). You can point `--workspace` at any directory you want to share — the pip package does not bundle any workspace files of its own.
 
 ### Read the Spec
 

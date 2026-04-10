@@ -10,9 +10,13 @@ __pycache__/
 # Node
 node_modules/
 dist/
+build/
 
 # API keys
 local_config.json
+mpac-package/src/mpac_protocol.egg-info/
+examples/two_machine_demo/host/config.json
+examples/two_machine_demo/guest/config.json
 
 # Runtime artifacts
 ref-impl/demo/interop_messages/

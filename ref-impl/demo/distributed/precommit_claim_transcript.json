@@ -1,0 +1,853 @@
+[
+  {
+    "ts": 1.0125739574432373,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "e481907a-f778-4cff-8adb-236be26a8dfb",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:7da5d243-c41e-44cf-8c71-e213b95c48d4"
+      },
+      "ts": "2026-04-08T03:15:05.440185Z",
+      "payload": {
+        "display_name": "Alice",
+        "roles": [
+          "owner"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "intent.update",
+          "intent.withdraw",
+          "intent.claim"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.0127310752868652,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "1a1a1c81-9a53-4516-b83f-1176952f75c3",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "service:coordinator-sess-precommit-c616e0",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+      },
+      "ts": "2026-04-08T03:15:05.440726Z",
+      "payload": {
+        "session_id": "sess-precommit-c616e0",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "governance",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "pre_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 60.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 1,
+        "granted_roles": [
+          "owner"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 1.013564109802246,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "7ea0f244-b618-4ed2-ae4c-675c46412ce4",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:05.441300Z",
+      "payload": {
+        "display_name": "Bob",
+        "roles": [
+          "owner"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "intent.update",
+          "intent.withdraw",
+          "intent.claim"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.0136778354644775,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "845425c9-d9dc-4d61-8dbf-2c7efa66312a",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "service:coordinator-sess-precommit-c616e0",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+      },
+      "ts": "2026-04-08T03:15:05.441681Z",
+      "payload": {
+        "session_id": "sess-precommit-c616e0",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "governance",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "pre_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 60.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 2,
+        "granted_roles": [
+          "owner"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 1.014336109161377,
+    "direction": "inbound",
+    "from": "agent:Charlie",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "3fe6aaa1-ab3c-4b47-9856-24fa226dbf1d",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Charlie",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Charlie:fa182ec9-eee6-49c2-b000-5912a3a7204e"
+      },
+      "ts": "2026-04-08T03:15:05.442132Z",
+      "payload": {
+        "display_name": "Charlie",
+        "roles": [
+          "owner"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "intent.update",
+          "intent.withdraw",
+          "intent.claim"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.0144400596618652,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "68d2021b-d9c1-46e5-b9d3-d1f70a23c0d6",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "service:coordinator-sess-precommit-c616e0",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+      },
+      "ts": "2026-04-08T03:15:05.442444Z",
+      "payload": {
+        "session_id": "sess-precommit-c616e0",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "governance",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "pre_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 60.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 3,
+        "granted_roles": [
+          "owner"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 7
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 8.172529935836792,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "f1e05ca8-19ad-4528-8716-071900e7d2dc",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:7da5d243-c41e-44cf-8c71-e213b95c48d4"
+      },
+      "ts": "2026-04-08T03:15:12.599942Z",
+      "payload": {
+        "intent_id": "intent-alice-6dd3d7",
+        "objective": "Restructure the authentication endpoints to centralize auth logic and improve the overall API design",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "api/endpoints.py"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 8.674851894378662,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "1cb36808-b48d-4a42-9c91-5cd73c72506e",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:13.101983Z",
+      "payload": {
+        "intent_id": "intent-bob-5e5c56",
+        "objective": "Update user and session models to support centralized authentication with last_login tracking",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "models/user.py",
+            "models/session.py"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 9.176955938339233,
+    "direction": "inbound",
+    "from": "agent:Charlie",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "457cc10c-18b1-48b7-88c5-10bdaa6b8fa2",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Charlie",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Charlie:fa182ec9-eee6-49c2-b000-5912a3a7204e"
+      },
+      "ts": "2026-04-08T03:15:13.604189Z",
+      "payload": {
+        "intent_id": "intent-charlie-847fad",
+        "objective": "Update integration tests to cover the refactored authentication flow and verify last_login field functionality",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "tests/test_api.py"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 15.683103084564209,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "INTENT_UPDATE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_UPDATE",
+      "message_id": "86536941-5652-449d-a041-8532d4b3c96b",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:7da5d243-c41e-44cf-8c71-e213b95c48d4"
+      },
+      "ts": "2026-04-08T03:15:20.110575Z",
+      "payload": {
+        "intent_id": "intent-alice-6dd3d7",
+        "objective": "Refactor auth flow across endpoints, middleware AND validators",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "api/endpoints.py",
+            "utils/validators.py"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 23.957844972610474,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "OP_PROPOSE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_PROPOSE",
+      "message_id": "ce2eb359-7f50-4963-a851-c5571e60d9e0",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:28.385419Z",
+      "payload": {
+        "op_id": "op-bob-17a952",
+        "intent_id": "intent-bob-5e5c56",
+        "target": "models/user.py",
+        "op_kind": "replace"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 23.958003044128418,
+    "direction": "outbound",
+    "message_type": "COORDINATOR_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "COORDINATOR_STATUS",
+      "message_id": "4a28fdf4-2a85-47b2-b158-e66621807a3b",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "service:coordinator-sess-precommit-c616e0",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+      },
+      "ts": "2026-04-08T03:15:28.386006Z",
+      "payload": {
+        "event": "authorization",
+        "coordinator_id": "service:coordinator-sess-precommit-c616e0",
+        "session_health": "healthy",
+        "authorized_op_id": "op-bob-17a952",
+        "authorized_by": "service:coordinator-sess-precommit-c616e0"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 15
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 23.958958864212036,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "OP_COMMIT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_COMMIT",
+      "message_id": "29b76ff5-b019-42aa-bc5f-66ec938f1347",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:28.386772Z",
+      "payload": {
+        "op_id": "op-bob-17a952",
+        "intent_id": "intent-bob-5e5c56",
+        "target": "models/user.py",
+        "op_kind": "replace",
+        "state_ref_before": "hash-user-model-basic",
+        "state_ref_after": "hash-user-model-with-auth"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  },
+  {
+    "ts": 28.965917110443115,
+    "direction": "inbound",
+    "from": "agent:Charlie",
+    "message_type": "INTENT_WITHDRAW",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_WITHDRAW",
+      "message_id": "c77843a5-62f2-46e8-a00b-bf0c2b85166d",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Charlie",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Charlie:fa182ec9-eee6-49c2-b000-5912a3a7204e"
+      },
+      "ts": "2026-04-08T03:15:33.393075Z",
+      "payload": {
+        "intent_id": "intent-charlie-847fad",
+        "reason": "Primary engineers took priority on overlapping files"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 29.267987966537476,
+    "direction": "inbound",
+    "from": "agent:Charlie",
+    "message_type": "OP_PROPOSE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_PROPOSE",
+      "message_id": "f25d6eb8-8127-428b-9e02-cc69b5a0094f",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Charlie",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Charlie:fa182ec9-eee6-49c2-b000-5912a3a7204e"
+      },
+      "ts": "2026-04-08T03:15:33.695217Z",
+      "payload": {
+        "op_id": "op-charlie-0e7991",
+        "intent_id": "intent-charlie-847fad",
+        "target": "tests/test_api.py",
+        "op_kind": "replace"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  },
+  {
+    "ts": 29.268214225769043,
+    "direction": "outbound",
+    "message_type": "OP_REJECT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_REJECT",
+      "message_id": "f74ea19a-534b-457b-855d-dec1df5b24ca",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "service:coordinator-sess-precommit-c616e0",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+      },
+      "ts": "2026-04-08T03:15:33.696208Z",
+      "payload": {
+        "op_id": "op-charlie-0e7991",
+        "reason": "intent_terminated",
+        "refers_to": "457cc10c-18b1-48b7-88c5-10bdaa6b8fa2"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 19
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 29.269667863845825,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "78681096-1a2b-4154-86bb-02631371327f",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:33.696858Z",
+      "payload": {
+        "status": "working"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      }
+    }
+  },
+  {
+    "ts": 29.269795894622803,
+    "direction": "inbound",
+    "from": "agent:Charlie",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "b3f6091a-1bfa-4c6a-bcf6-a4facaf36ee0",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Charlie",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Charlie:fa182ec9-eee6-49c2-b000-5912a3a7204e"
+      },
+      "ts": "2026-04-08T03:15:33.697047Z",
+      "payload": {
+        "status": "working"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      }
+    }
+  },
+  {
+    "protocol": "MPAC",
+    "version": "0.1.13",
+    "message_type": "PROTOCOL_ERROR",
+    "message_id": "7167ac3c-b970-4fd3-8b3a-f4c7cfc8d2a3",
+    "session_id": "sess-precommit-c616e0",
+    "sender": {
+      "principal_id": "service:coordinator-sess-precommit-c616e0",
+      "principal_type": "service",
+      "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+    },
+    "ts": "2026-04-08T03:15:34.699854Z",
+    "payload": {
+      "error_code": "PARTICIPANT_UNAVAILABLE",
+      "refers_to": "agent:Alice",
+      "description": "Participant agent:Alice is unavailable (no heartbeat for >60.0s)"
+    },
+    "watermark": {
+      "kind": "lamport_clock",
+      "value": 23
+    },
+    "coordinator_epoch": 1
+  },
+  {
+    "ts": 35.2776358127594,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "70e46101-4044-4cfe-8b6c-be16725b4215",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:39.704603Z",
+      "payload": {
+        "status": "working"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 6
+      }
+    }
+  },
+  {
+    "ts": 35.277825117111206,
+    "direction": "inbound",
+    "from": "agent:Charlie",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "85d69f24-4615-47ee-b3de-1026cafdb5d7",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Charlie",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Charlie:fa182ec9-eee6-49c2-b000-5912a3a7204e"
+      },
+      "ts": "2026-04-08T03:15:39.705054Z",
+      "payload": {
+        "status": "working"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 6
+      }
+    }
+  },
+  {
+    "ts": 35.778284788131714,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "INTENT_CLAIM",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_CLAIM",
+      "message_id": "b15a03cf-8f56-4c98-8a92-01de057daac8",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:40.205661Z",
+      "payload": {
+        "claim_id": "claim-bob-d1d273",
+        "original_intent_id": "intent-alice-6dd3d7",
+        "original_principal_id": "agent:Alice",
+        "new_intent_id": "intent-bob-claimed-66e9e2",
+        "objective": "Continue Alice's auth refactor (claimed after crash)",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "api/endpoints.py",
+            "utils/validators.py"
+          ]
+        },
+        "justification": "Alice crashed; continuing her work to meet deadline"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 7
+      }
+    }
+  },
+  {
+    "ts": 35.77857708930969,
+    "direction": "outbound",
+    "message_type": "INTENT_CLAIM_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_CLAIM_STATUS",
+      "message_id": "e081cce0-dc28-41d0-9765-0a74977a728e",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "service:coordinator-sess-precommit-c616e0",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+      },
+      "ts": "2026-04-08T03:15:40.206507Z",
+      "payload": {
+        "claim_id": "claim-bob-d1d273",
+        "original_intent_id": "intent-alice-6dd3d7",
+        "new_intent_id": "intent-bob-claimed-66e9e2",
+        "decision": "approved",
+        "approved_by": "agent:Charlie"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 27
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 38.27813696861267,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "OP_PROPOSE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_PROPOSE",
+      "message_id": "a21b92e1-595a-4560-941a-ed7a7368ae5e",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:42.705609Z",
+      "payload": {
+        "op_id": "op-bob-claimed-2bd9f6",
+        "intent_id": "intent-bob-claimed-66e9e2",
+        "target": "api/endpoints.py",
+        "op_kind": "replace"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 8
+      }
+    }
+  },
+  {
+    "ts": 38.278324127197266,
+    "direction": "outbound",
+    "message_type": "COORDINATOR_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "COORDINATOR_STATUS",
+      "message_id": "50470332-5abb-4805-8120-9174dad601de",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "service:coordinator-sess-precommit-c616e0",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-precommit-c616e0:epoch-1"
+      },
+      "ts": "2026-04-08T03:15:42.706327Z",
+      "payload": {
+        "event": "authorization",
+        "coordinator_id": "service:coordinator-sess-precommit-c616e0",
+        "session_health": "healthy",
+        "authorized_op_id": "op-bob-claimed-2bd9f6",
+        "authorized_by": "service:coordinator-sess-precommit-c616e0"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 29
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 38.27941417694092,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "OP_COMMIT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_COMMIT",
+      "message_id": "5aa79014-6601-4b2e-b6bc-f45e0b0ead01",
+      "session_id": "sess-precommit-c616e0",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:30cdcf4c-f096-4b67-8a48-3e49759a69bc"
+      },
+      "ts": "2026-04-08T03:15:42.707110Z",
+      "payload": {
+        "op_id": "op-bob-claimed-2bd9f6",
+        "intent_id": "intent-bob-claimed-66e9e2",
+        "target": "api/endpoints.py",
+        "op_kind": "replace",
+        "state_ref_before": "abc123def456",
+        "state_ref_after": "ghi789jkl012"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 9
+      }
+    }
+  }
+]

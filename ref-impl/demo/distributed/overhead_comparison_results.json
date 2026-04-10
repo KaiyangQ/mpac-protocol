@@ -1,0 +1,204 @@
+{
+  "generated_at": "2026-04-07T21:19:59.371016+00:00",
+  "model": "claude-sonnet-4-20250514",
+  "scenario": "3-agent cross-module PR review",
+  "traditional": {
+    "mode": "traditional",
+    "wall_clock_sec": 131.76,
+    "decision_time_sec": 63.11,
+    "coordination_overhead_sec": 68.65,
+    "overhead_pct": 52.1,
+    "segments": [
+      {
+        "label": "Alice initial review",
+        "category": "decision",
+        "agent": "Alice",
+        "duration_sec": 8.44
+      },
+      {
+        "label": "Bob blocked waiting for Alice to finish",
+        "category": "coordination",
+        "agent": "Bob",
+        "duration_sec": 8.44
+      },
+      {
+        "label": "Bob initial review",
+        "category": "decision",
+        "agent": "Bob",
+        "duration_sec": 8.16
+      },
+      {
+        "label": "Bob drafts clarification",
+        "category": "decision",
+        "agent": "Bob",
+        "duration_sec": 5.06
+      },
+      {
+        "label": "Round-trip: Bob→Alice delivery + Alice context switch",
+        "category": "coordination",
+        "agent": "system",
+        "duration_sec": 5.06
+      },
+      {
+        "label": "Alice responds to clarification",
+        "category": "decision",
+        "agent": "Alice",
+        "duration_sec": 5.9
+      },
+      {
+        "label": "Round-trip: Alice→Bob response delivery",
+        "category": "coordination",
+        "agent": "system",
+        "duration_sec": 5.9
+      },
+      {
+        "label": "Charlie blocked waiting for Alice+Bob+conflict",
+        "category": "coordination",
+        "agent": "Charlie",
+        "duration_sec": 27.55
+      },
+      {
+        "label": "Charlie initial review",
+        "category": "decision",
+        "agent": "Charlie",
+        "duration_sec": 7.68
+      },
+      {
+        "label": "Charlie drafts reconciliation",
+        "category": "decision",
+        "agent": "Charlie",
+        "duration_sec": 6.55
+      },
+      {
+        "label": "Post-hoc conflict: reconciliation delivery to Alice+Bob",
+        "category": "coordination",
+        "agent": "system",
+        "duration_sec": 6.55
+      },
+      {
+        "label": "Alice final review",
+        "category": "decision",
+        "agent": "Alice",
+        "duration_sec": 7.59
+      },
+      {
+        "label": "Bob waits for prior final review",
+        "category": "coordination",
+        "agent": "Bob",
+        "duration_sec": 7.59
+      },
+      {
+        "label": "Bob final review",
+        "category": "decision",
+        "agent": "Bob",
+        "duration_sec": 7.57
+      },
+      {
+        "label": "Charlie waits for prior final review",
+        "category": "coordination",
+        "agent": "Charlie",
+        "duration_sec": 7.57
+      },
+      {
+        "label": "Charlie final review",
+        "category": "decision",
+        "agent": "Charlie",
+        "duration_sec": 6.17
+      }
+    ]
+  },
+  "mpac": {
+    "mode": "mpac",
+    "wall_clock_sec": 27.38,
+    "decision_time_sec": 57.13,
+    "coordination_overhead_sec": 3.02,
+    "overhead_pct": 11.0,
+    "segments": [
+      {
+        "label": "All agents connect + HELLO (parallel)",
+        "category": "coordination",
+        "agent": "all",
+        "duration_sec": 0.0
+      },
+      {
+        "label": "Charlie initial review",
+        "category": "decision",
+        "agent": "Charlie",
+        "duration_sec": 6.92
+      },
+      {
+        "label": "Bob initial review",
+        "category": "decision",
+        "agent": "Bob",
+        "duration_sec": 8.66
+      },
+      {
+        "label": "Alice initial review",
+        "category": "decision",
+        "agent": "Alice",
+        "duration_sec": 9.36
+      },
+      {
+        "label": "INTENT_ANNOUNCE + scope overlap detection",
+        "category": "coordination",
+        "agent": "all",
+        "duration_sec": 2.51
+      },
+      {
+        "label": "Alice conflict position",
+        "category": "decision",
+        "agent": "Alice",
+        "duration_sec": 3.31
+      },
+      {
+        "label": "Charlie conflict position",
+        "category": "decision",
+        "agent": "Charlie",
+        "duration_sec": 3.57
+      },
+      {
+        "label": "Bob conflict position",
+        "category": "decision",
+        "agent": "Bob",
+        "duration_sec": 4.48
+      },
+      {
+        "label": "Coordinator auto-resolution",
+        "category": "coordination",
+        "agent": "coordinator",
+        "duration_sec": 0.0
+      },
+      {
+        "label": "Charlie final review",
+        "category": "decision",
+        "agent": "Charlie",
+        "duration_sec": 5.11
+      },
+      {
+        "label": "Alice final review",
+        "category": "decision",
+        "agent": "Alice",
+        "duration_sec": 6.03
+      },
+      {
+        "label": "Bob final review",
+        "category": "decision",
+        "agent": "Bob",
+        "duration_sec": 9.68
+      },
+      {
+        "label": "Parallel OP_COMMIT",
+        "category": "coordination",
+        "agent": "all",
+        "duration_sec": 0.51
+      }
+    ]
+  },
+  "mpac_transcript_messages": 18,
+  "methodology": {
+    "decision_time": "measured — real Claude API calls with identical prompts in both modes",
+    "mpac_coordination_overhead": "measured — real WebSocket transport, protocol message processing",
+    "traditional_coordination_overhead": "modeled — calculated from serial dependency structure (e.g., Bob waits for Alice's review duration before starting). Conservative lower bound: real workflows add human scheduling, async notification latency, and context-switch cost not modeled here."
+  },
+  "claim": "We distinguish coordination overhead from decision time in multi-principal workflows. Prior systems conflate the two and attempt to optimize total latency, which inevitably trades off accountability. MPAC preserves decision time while eliminating coordination overhead."
+}

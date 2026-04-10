@@ -1,0 +1,61 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/heartbeat.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEARTBEAT Payload",
+  "type": "object",
+  "required": ["status"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["idle", "working", "blocked", "awaiting_review", "offline"]
+    },
+    "active_intent_id": { "type": "string" },
+    "summary": { "type": "string" },
+    "backend_health": {
+      "type": "object",
+      "required": ["model_id", "provider_status", "checked_at"],
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "description": "Current model identifier in provider/model format"
+        },
+        "provider_status": {
+          "type": "string",
+          "enum": ["operational", "degraded", "down", "unknown"],
+          "description": "Backend provider status, aligned with aistatus.cc status values"
+        },
+        "status_detail": {
+          "type": ["string", "null"],
+          "description": "Human-readable status detail (e.g., 'Elevated error rates')"
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the last health check"
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "provider": { "type": "string" },
+              "status": { "type": "string", "enum": ["operational", "degraded", "down", "unknown"] },
+              "suggested_model": { "type": "string" }
+            }
+          },
+          "description": "Alternative providers/models when current is degraded/down"
+        },
+        "switched_from": {
+          "type": "string",
+          "description": "Previous model_id if the agent has switched backends"
+        },
+        "switch_reason": {
+          "type": "string",
+          "enum": ["provider_down", "provider_degraded", "manual", "cost_optimization"],
+          "description": "Reason for the backend switch"
+        }
+      },
+      "description": "Backend provider health status (Section 14.3.1). Optional; present when backend health monitoring is enabled."
+    }
+  }
+}

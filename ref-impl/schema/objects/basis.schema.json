@@ -1,0 +1,45 @@
+{
+  "$id": "https://mpac-protocol.org/schema/objects/basis.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Basis",
+  "description": "Describes how a conflict was detected.",
+  "type": "object",
+  "required": ["kind"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["rule", "heuristic", "model_inference", "semantic_match", "human_report"]
+    },
+    "rule_id": { "type": "string" },
+    "matcher": { "type": "string" },
+    "match_type": {
+      "type": "string",
+      "enum": ["contradictory", "equivalent", "uncertain"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "matched_pair": {
+      "type": "object",
+      "properties": {
+        "left": {
+          "type": "object",
+          "properties": {
+            "source_intent_id": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        },
+        "right": {
+          "type": "object",
+          "properties": {
+            "source_intent_id": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        }
+      }
+    },
+    "explanation": { "type": "string" }
+  }
+}

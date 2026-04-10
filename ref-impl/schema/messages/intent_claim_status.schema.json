@@ -1,0 +1,45 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/intent_claim_status.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "INTENT_CLAIM_STATUS Payload",
+  "type": "object",
+  "required": ["claim_id", "original_intent_id", "decision"],
+  "properties": {
+    "claim_id": { "type": "string" },
+    "original_intent_id": { "type": "string" },
+    "new_intent_id": { "type": "string" },
+    "decision": {
+      "type": "string",
+      "enum": ["approved", "rejected", "withdrawn"]
+    },
+    "reason": { "type": "string" },
+    "approved_by": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "decision": { "const": "approved" } }
+      },
+      "then": {
+        "required": ["new_intent_id"],
+        "description": "When decision=approved, new_intent_id is required. approved_by is required in Governance Profile sessions (enforcement is implementation-level)."
+      }
+    },
+    {
+      "if": {
+        "properties": { "decision": { "const": "rejected" } }
+      },
+      "then": {
+        "required": ["reason"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "decision": { "const": "withdrawn" } }
+      },
+      "then": {
+        "required": ["reason"]
+      }
+    }
+  ]
+}

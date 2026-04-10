@@ -1,0 +1,144 @@
+{
+  "$id": "https://mpac-protocol.org/schema/envelope.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MPAC Message Envelope",
+  "description": "Outer wrapper for all MPAC v0.1.13 messages. The payload field is validated against the message-type-specific schema via oneOf dispatch.",
+  "type": "object",
+  "required": ["protocol", "version", "message_type", "message_id", "session_id", "sender", "ts", "payload"],
+  "properties": {
+    "protocol": { "type": "string", "const": "MPAC" },
+    "version": { "type": "string", "description": "Protocol version, e.g. '0.1.13'" },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "HELLO", "SESSION_INFO", "HEARTBEAT", "GOODBYE",
+        "SESSION_CLOSE", "COORDINATOR_STATUS",
+        "INTENT_ANNOUNCE", "INTENT_UPDATE", "INTENT_WITHDRAW", "INTENT_CLAIM", "INTENT_CLAIM_STATUS",
+        "OP_PROPOSE", "OP_BATCH_COMMIT", "OP_COMMIT", "OP_REJECT", "OP_SUPERSEDE",
+        "CONFLICT_REPORT", "CONFLICT_ACK", "CONFLICT_ESCALATE",
+        "RESOLUTION", "PROTOCOL_ERROR"
+      ]
+    },
+    "message_id": { "type": "string", "description": "Globally unique message ID." },
+    "session_id": { "type": "string" },
+    "sender": {
+      "type": "object",
+      "required": ["principal_id", "principal_type", "sender_instance_id"],
+      "properties": {
+        "principal_id": { "type": "string" },
+        "principal_type": { "type": "string", "enum": ["human", "agent", "service"] },
+        "sender_instance_id": { "type": "string" }
+      }
+    },
+    "ts": { "type": "string", "format": "date-time", "description": "RFC 3339 UTC timestamp." },
+    "payload": { "type": "object" },
+    "watermark": { "$ref": "objects/watermark.schema.json" },
+    "coordinator_epoch": { "type": "integer", "minimum": 1 },
+    "in_reply_to": { "type": "string" },
+    "trace_id": { "type": "string" },
+    "policy_ref": { "type": "string" },
+    "signature": { "type": "string" },
+    "extensions": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "message_type": { "const": "HELLO" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/hello.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "SESSION_INFO" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/session_info.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "HEARTBEAT" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/heartbeat.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "GOODBYE" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/goodbye.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "SESSION_CLOSE" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/session_close.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "COORDINATOR_STATUS" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/coordinator_status.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "INTENT_ANNOUNCE" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/intent_announce.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "INTENT_UPDATE" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/intent_update.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "INTENT_WITHDRAW" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/intent_withdraw.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "INTENT_CLAIM" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/intent_claim.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "INTENT_CLAIM_STATUS" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/intent_claim_status.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "OP_PROPOSE" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/op_propose.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "OP_BATCH_COMMIT" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/op_batch_commit.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "OP_COMMIT" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/op_commit.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "OP_REJECT" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/op_reject.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "OP_SUPERSEDE" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/op_supersede.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "CONFLICT_REPORT" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/conflict_report.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "CONFLICT_ACK" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/conflict_ack.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "CONFLICT_ESCALATE" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/conflict_escalate.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "RESOLUTION" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/resolution.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "PROTOCOL_ERROR" } } },
+      "then": { "properties": { "payload": { "$ref": "messages/protocol_error.schema.json" } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "message_type": {
+            "enum": ["SESSION_INFO", "SESSION_CLOSE", "COORDINATOR_STATUS", "INTENT_CLAIM_STATUS"]
+          }
+        }
+      },
+      "then": {
+        "required": ["coordinator_epoch"],
+        "properties": {
+          "coordinator_epoch": { "type": "integer", "minimum": 1, "description": "MUST be present on coordinator-authored messages." }
+        }
+      }
+    }
+  ]
+}

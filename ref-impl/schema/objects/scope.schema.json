@@ -1,0 +1,72 @@
+{
+  "$id": "https://mpac-protocol.org/schema/objects/scope.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Scope",
+  "description": "Describes the target resource set of an intent or operation. Core input for conflict detection.",
+  "type": "object",
+  "required": ["kind"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["file_set", "resource_path", "task_set", "query", "entity_set", "custom"]
+    },
+    "resources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required when kind=file_set. File path array."
+    },
+    "pattern": {
+      "type": "string",
+      "description": "Required when kind=resource_path. Glob pattern."
+    },
+    "task_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required when kind=task_set."
+    },
+    "expression": {
+      "type": "string",
+      "description": "Required when kind=query."
+    },
+    "language": {
+      "type": "string",
+      "description": "Required when kind=query. Query language identifier."
+    },
+    "entities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required when kind=entity_set."
+    },
+    "canonical_uris": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Canonical resource URIs. MUST in cross-kind sessions under Authenticated/Verified profile."
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Implementation-specific extensions."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "file_set" } } },
+      "then": { "required": ["resources"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "resource_path" } } },
+      "then": { "required": ["pattern"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "task_set" } } },
+      "then": { "required": ["task_ids"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "query" } } },
+      "then": { "required": ["expression", "language"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "entity_set" } } },
+      "then": { "required": ["entities"] }
+    }
+  ]
+}

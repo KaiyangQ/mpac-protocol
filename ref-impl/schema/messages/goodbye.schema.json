@@ -1,0 +1,22 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/goodbye.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GOODBYE Payload",
+  "type": "object",
+  "required": ["reason"],
+  "properties": {
+    "reason": {
+      "type": "string",
+      "enum": ["user_exit", "session_complete", "error", "timeout"]
+    },
+    "active_intents": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "intent_disposition": {
+      "type": "string",
+      "enum": ["withdraw", "transfer", "expire"],
+      "default": "withdraw"
+    }
+  }
+}

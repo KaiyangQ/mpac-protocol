@@ -1,0 +1,16 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/intent_claim.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "INTENT_CLAIM Payload",
+  "type": "object",
+  "required": ["claim_id", "original_intent_id", "original_principal_id", "new_intent_id", "objective", "scope"],
+  "properties": {
+    "claim_id": { "type": "string" },
+    "original_intent_id": { "type": "string" },
+    "original_principal_id": { "type": "string" },
+    "new_intent_id": { "type": "string" },
+    "objective": { "type": "string" },
+    "scope": { "$ref": "../objects/scope.schema.json" },
+    "justification": { "type": "string" }
+  }
+}

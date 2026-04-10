@@ -1,0 +1,24 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/conflict_report.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CONFLICT_REPORT Payload",
+  "type": "object",
+  "required": ["conflict_id", "category", "severity", "basis", "based_on_watermark", "description"],
+  "properties": {
+    "conflict_id": { "type": "string" },
+    "related_intents": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "related_ops": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "category": {
+      "type": "string",
+      "enum": ["scope_overlap", "concurrent_write", "semantic_goal_conflict", "assumption_contradiction", "policy_violation", "authority_conflict", "dependency_breakage", "resource_contention"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "low", "medium", "high", "critical"]
+    },
+    "basis": { "$ref": "../objects/basis.schema.json" },
+    "based_on_watermark": { "$ref": "../objects/watermark.schema.json" },
+    "description": { "type": "string" },
+    "suggested_action": { "type": "string" }
+  }
+}

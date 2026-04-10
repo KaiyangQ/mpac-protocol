@@ -1,0 +1,540 @@
+[
+  {
+    "ts": 1.0130162239074707,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "b0ebbb51-5605-4ee1-86ef-a779f02f56ae",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:0fa46fb7-0a5e-4db3-8ff7-98e8b81d08ac"
+      },
+      "ts": "2026-04-08T03:10:15.558848Z",
+      "payload": {
+        "display_name": "Alice",
+        "roles": [
+          "owner"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "intent.withdraw",
+          "conflict.ack",
+          "governance.override"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.0131771564483643,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "c67482e6-da1a-44fd-9bba-4f7fb49f9c9d",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "service:coordinator-sess-escalation-8eb067",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-escalation-8eb067:epoch-1"
+      },
+      "ts": "2026-04-08T03:10:15.559348Z",
+      "payload": {
+        "session_id": "sess-escalation-8eb067",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "governance",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 1,
+        "granted_roles": [
+          "owner"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 1.0138771533966064,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "7312dfff-777d-4912-8cc0-9e7cf7f1875d",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:2cd45dfd-35f4-4f76-8a2d-bed28aa560c6"
+      },
+      "ts": "2026-04-08T03:10:15.559864Z",
+      "payload": {
+        "display_name": "Bob",
+        "roles": [
+          "owner"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "intent.withdraw",
+          "conflict.ack",
+          "governance.override"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.013977289199829,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "3fcdfa22-7fdb-4bf1-a81e-b1fab7619dd0",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "service:coordinator-sess-escalation-8eb067",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-escalation-8eb067:epoch-1"
+      },
+      "ts": "2026-04-08T03:10:15.560174Z",
+      "payload": {
+        "session_id": "sess-escalation-8eb067",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "governance",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 2,
+        "granted_roles": [
+          "owner"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 1.014918327331543,
+    "direction": "inbound",
+    "from": "human:arbiter",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "f0da1d36-e876-464a-a647-719e67bac106",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "human:arbiter",
+        "principal_type": "agent",
+        "sender_instance_id": "human:arbiter:8425ae9f-1f23-49ca-b176-100f1246a126"
+      },
+      "ts": "2026-04-08T03:10:15.560778Z",
+      "payload": {
+        "display_name": "Arbiter",
+        "roles": [
+          "arbiter"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "intent.withdraw",
+          "conflict.ack",
+          "governance.override"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.0150389671325684,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "ba5d086a-4527-4e45-a1a3-d69e35ce61e2",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "service:coordinator-sess-escalation-8eb067",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-escalation-8eb067:epoch-1"
+      },
+      "ts": "2026-04-08T03:10:15.561231Z",
+      "payload": {
+        "session_id": "sess-escalation-8eb067",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "governance",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 3,
+        "granted_roles": [
+          "arbiter"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 7
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 3.6001102924346924,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "a7fee7dd-5fae-4ef1-954d-a79e40d00e1d",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:0fa46fb7-0a5e-4db3-8ff7-98e8b81d08ac"
+      },
+      "ts": "2026-04-08T03:10:18.145935Z",
+      "payload": {
+        "intent_id": "intent-alice-cc54b7",
+        "objective": "Restructure the navigation component into a responsive mega-menu with dropdown sections and improved layout styling",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "components/nav.tsx",
+            "styles/layout.css",
+            "hooks/useNavigation.ts"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 4.102642297744751,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "62953992-f64c-40b5-9969-c03d4151c5d4",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:2cd45dfd-35f4-4f76-8a2d-bed28aa560c6"
+      },
+      "ts": "2026-04-08T03:10:18.647829Z",
+      "payload": {
+        "intent_id": "intent-bob-fadba5",
+        "objective": "Refactor nav component into a minimal hamburger menu with mobile-first responsive design",
+        "scope": {
+          "kind": "file_set",
+          "resources": [
+            "components/nav.tsx",
+            "styles/layout.css",
+            "components/sidebar.tsx"
+          ]
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 4.103131294250488,
+    "direction": "outbound",
+    "message_type": "CONFLICT_REPORT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_REPORT",
+      "message_id": "28d58d62-545f-44a3-ae54-b4227ee7c19e",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "service:coordinator-sess-escalation-8eb067",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-sess-escalation-8eb067:epoch-1"
+      },
+      "ts": "2026-04-08T03:10:18.649284Z",
+      "payload": {
+        "conflict_id": "7ba8c6f8-6220-4ccd-a749-b54d3c731d8f",
+        "category": "scope_overlap",
+        "severity": "medium",
+        "principal_a": "agent:Bob",
+        "principal_b": "agent:Alice",
+        "intent_a": "intent-bob-fadba5",
+        "intent_b": "intent-alice-cc54b7"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 10
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 20.96011710166931,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "30f69908-bf11-404b-b6ba-5c6bfe7dd619",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:0fa46fb7-0a5e-4db3-8ff7-98e8b81d08ac"
+      },
+      "ts": "2026-04-08T03:10:35.505741Z",
+      "payload": {
+        "conflict_id": "7ba8c6f8-6220-4ccd-a749-b54d3c731d8f",
+        "ack_type": "disputed"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 21.261950254440308,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "1427fd9c-51fd-48f2-a840-1c60307e29c5",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:2cd45dfd-35f4-4f76-8a2d-bed28aa560c6"
+      },
+      "ts": "2026-04-08T03:10:35.807498Z",
+      "payload": {
+        "conflict_id": "7ba8c6f8-6220-4ccd-a749-b54d3c731d8f",
+        "ack_type": "disputed"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 21.56344437599182,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "CONFLICT_ESCALATE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ESCALATE",
+      "message_id": "973ff1d1-8891-4303-a48f-2f954f1a7f5c",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:0fa46fb7-0a5e-4db3-8ff7-98e8b81d08ac"
+      },
+      "ts": "2026-04-08T03:10:36.109074Z",
+      "payload": {
+        "conflict_id": "7ba8c6f8-6220-4ccd-a749-b54d3c731d8f",
+        "escalate_to": "human:arbiter",
+        "reason": "Both owners dispute the conflict; arbiter decision needed",
+        "context": "Alice wants mega-menu; Bob wants hamburger menu. Both approaches require changes to the same core files."
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  },
+  {
+    "ts": 28.239190101623535,
+    "direction": "inbound",
+    "from": "human:arbiter",
+    "message_type": "RESOLUTION",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "RESOLUTION",
+      "message_id": "5704678c-5957-4044-a2a8-534d1a44afe8",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "human:arbiter",
+        "principal_type": "agent",
+        "sender_instance_id": "human:arbiter:8425ae9f-1f23-49ca-b176-100f1246a126"
+      },
+      "ts": "2026-04-08T03:10:42.784630Z",
+      "payload": {
+        "conflict_id": "7ba8c6f8-6220-4ccd-a749-b54d3c731d8f",
+        "decision": "human_override",
+        "rationale": "Bob's approach provides the superior technical solution by prioritizing mobile-first responsive design and offering a more comprehensive UX strategy. His proposal to combine both approaches (hamburger for mobile, mega-menu for desktop) creates a unified responsive system that serves all users optimally. As UX engineer, Bob has the domain expertise to architect interaction patterns, while his willingness to incorporate Alice's mega-menu for desktop shows collaborative problem-solving. This approach maximizes user experience across all device types rather than forcing a single pattern.",
+        "outcome": {
+          "accepted": [
+            "intent-bob-fadba5"
+          ],
+          "rejected": [
+            "intent-alice-cc54b7"
+          ],
+          "merged": []
+        }
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 33.33175230026245,
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "INTENT_WITHDRAW",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_WITHDRAW",
+      "message_id": "93389f6b-7d77-45b4-aeb7-89bad48217cc",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:0fa46fb7-0a5e-4db3-8ff7-98e8b81d08ac"
+      },
+      "ts": "2026-04-08T03:10:47.877444Z",
+      "payload": {
+        "intent_id": "intent-alice-cc54b7",
+        "reason": "Arbiter ruled in favor of Bob's approach"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      }
+    }
+  },
+  {
+    "ts": 36.131566286087036,
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "OP_COMMIT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_COMMIT",
+      "message_id": "689aca14-7e8b-469a-879b-104a7f88e203",
+      "session_id": "sess-escalation-8eb067",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:2cd45dfd-35f4-4f76-8a2d-bed28aa560c6"
+      },
+      "ts": "2026-04-08T03:10:50.677243Z",
+      "payload": {
+        "op_id": "op-bob-851f13",
+        "intent_id": "intent-bob-fadba5",
+        "target": "components/nav.tsx",
+        "op_kind": "replace",
+        "state_ref_before": "nav-state-7f8e9d2a",
+        "state_ref_after": "nav-state-3c4b5e6f"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  }
+]

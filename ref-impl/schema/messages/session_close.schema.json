@@ -1,0 +1,36 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/session_close.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SESSION_CLOSE Payload",
+  "type": "object",
+  "required": ["reason", "final_lamport_clock"],
+  "properties": {
+    "reason": {
+      "type": "string",
+      "enum": ["completed", "timeout", "policy", "coordinator_shutdown", "manual"]
+    },
+    "final_lamport_clock": { "type": "integer" },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_intents": { "type": "integer" },
+        "completed_intents": { "type": "integer" },
+        "expired_intents": { "type": "integer" },
+        "withdrawn_intents": { "type": "integer" },
+        "total_operations": { "type": "integer" },
+        "committed_operations": { "type": "integer" },
+        "rejected_operations": { "type": "integer" },
+        "abandoned_operations": { "type": "integer" },
+        "total_conflicts": { "type": "integer" },
+        "resolved_conflicts": { "type": "integer" },
+        "total_participants": { "type": "integer" },
+        "duration_sec": { "type": "integer" }
+      }
+    },
+    "active_intents_disposition": {
+      "type": "string",
+      "enum": ["withdraw_all", "expire_all"]
+    },
+    "transcript_ref": { "type": "string" }
+  }
+}

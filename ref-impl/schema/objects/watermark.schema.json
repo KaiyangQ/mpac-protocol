@@ -1,0 +1,24 @@
+{
+  "$id": "https://mpac-protocol.org/schema/objects/watermark.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Watermark",
+  "description": "Causal context watermark — expresses 'what the sender knew when sending this message'.",
+  "type": "object",
+  "required": ["kind", "value"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["lamport_clock", "vector_clock", "causal_frontier", "opaque"],
+      "description": "Watermark type. lamport_clock is MUST-support baseline."
+    },
+    "value": {
+      "description": "Kind-dependent value: lamport_clock → integer, vector_clock → object, others → string."
+    },
+    "lamport_value": {
+      "type": "integer",
+      "description": "Fallback comparison value when kind is not lamport_clock. SHOULD be provided."
+    }
+  },
+  "if": { "properties": { "kind": { "const": "lamport_clock" } } },
+  "then": { "properties": { "value": { "type": "integer" } } }
+}

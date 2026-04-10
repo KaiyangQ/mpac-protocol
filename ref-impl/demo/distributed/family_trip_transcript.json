@@ -1,0 +1,876 @@
+[
+  {
+    "ts": 0.822197437286377,
+    "direction": "inbound",
+    "from": "agent:dad-planner",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "90bc0eee-2940-431b-a6c9-c0a485ac3c98",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:dad-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:dad-planner:89971119-8475-4172-a515-bd7d92a8b466"
+      },
+      "ts": "2026-04-06T17:58:13.619658Z",
+      "payload": {
+        "display_name": "Dad",
+        "roles": [
+          "owner"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "conflict.report"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 0.8224670886993408,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "2c76c2dc-f56e-424e-a5c7-655b496c11ec",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "service:coordinator-family-trip-2026-summer",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-family-trip-2026-summer:epoch-1"
+      },
+      "ts": "2026-04-06T17:58:13.621379Z",
+      "payload": {
+        "session_id": "family-trip-2026-summer",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "core",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 1,
+        "granted_roles": [
+          "owner"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 1.1288676261901855,
+    "direction": "inbound",
+    "from": "agent:mom-planner",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "da9688f5-1b5b-4ae5-9f1c-a23e133c4f6b",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:mom-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:mom-planner:e4930cdb-54e9-4501-a4a9-8e4adf4f35e9"
+      },
+      "ts": "2026-04-06T17:58:13.926811Z",
+      "payload": {
+        "display_name": "Mom",
+        "roles": [
+          "owner"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "conflict.report"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.1290888786315918,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "0262a4d9-75ef-4da1-9afa-fbb3f448162b",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "service:coordinator-family-trip-2026-summer",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-family-trip-2026-summer:epoch-1"
+      },
+      "ts": "2026-04-06T17:58:13.927988Z",
+      "payload": {
+        "session_id": "family-trip-2026-summer",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "core",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 2,
+        "granted_roles": [
+          "owner"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 1.4364237785339355,
+    "direction": "inbound",
+    "from": "agent:kid-planner",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "939b183e-2925-4561-86f7-33ff640f93d4",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:kid-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:kid-planner:dc3d175a-f554-4834-b908-03b2d471109b"
+      },
+      "ts": "2026-04-06T17:58:14.234428Z",
+      "payload": {
+        "display_name": "Kid",
+        "roles": [
+          "contributor"
+        ],
+        "capabilities": [
+          "intent.broadcast",
+          "op.propose",
+          "op.commit",
+          "op.batch_commit",
+          "conflict.report"
+        ]
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 1
+      }
+    }
+  },
+  {
+    "ts": 1.4366364479064941,
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "e4457870-9bac-4a92-9e75-1bf58e78be5b",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "service:coordinator-family-trip-2026-summer",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-family-trip-2026-summer:epoch-1"
+      },
+      "ts": "2026-04-06T17:58:14.235542Z",
+      "payload": {
+        "session_id": "family-trip-2026-summer",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "core",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "intent_claim_grace_period_sec": 0.0,
+          "resolution_timeout_sec": 300.0
+        },
+        "participant_count": 3,
+        "granted_roles": [
+          "contributor"
+        ],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 7
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 7.593127012252808,
+    "direction": "inbound",
+    "from": "agent:dad-planner",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "25fc2df5-631f-424c-9e84-c521460d71a9",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:dad-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:dad-planner:89971119-8475-4172-a515-bd7d92a8b466"
+      },
+      "ts": "2026-04-06T17:58:20.391303Z",
+      "payload": {
+        "intent_id": "intent-dad-driving-camping",
+        "objective": "Plan all driving routes and transportation logistics, arrange one camping night in Moganshan with hiking activities, and establish the overall budget framework.",
+        "scope": {
+          "kind": "task_set",
+          "task_ids": [
+            "budget://transportation",
+            "budget://total",
+            "itinerary://day-2",
+            "itinerary://day-3"
+          ]
+        },
+        "ttl_sec": 3600,
+        "assumptions": [
+          "Family will stay 2-3 nights in Moganshan area for hiking and camping",
+          "One full day will be allocated to Anji for kid's theme park activities",
+          "Camping night will be mid-trip to allow gear setup and recovery time",
+          "Daily driving distances will not exceed 5 hours total"
+        ],
+        "priority": "high"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 8.402397871017456,
+    "direction": "inbound",
+    "from": "agent:mom-planner",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "a1bfc67c-1442-4196-8e9f-0ced92e5a537",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:mom-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:mom-planner:e4930cdb-54e9-4501-a4a9-8e4adf4f35e9"
+      },
+      "ts": "2026-04-06T17:58:21.200307Z",
+      "payload": {
+        "intent_id": "intent-mom-cultural-accommodation",
+        "objective": "Secure seafood-free cultural dining experiences and book family-friendly boutique minsu accommodations in Moganshan area with local handicraft workshops.",
+        "scope": {
+          "kind": "task_set",
+          "task_ids": [
+            "budget://accommodation",
+            "budget://food",
+            "itinerary://day-2",
+            "itinerary://day-3",
+            "itinerary://day-4"
+          ]
+        },
+        "ttl_sec": 3600,
+        "assumptions": [
+          "Family will stay in Moganshan/Anji area for 4 nights",
+          "Cultural activities can be integrated with kid-friendly experiences",
+          "Local restaurants can accommodate seafood allergy with advance notice"
+        ],
+        "priority": "high"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 8.402692079544067,
+    "direction": "outbound",
+    "message_type": "CONFLICT_REPORT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_REPORT",
+      "message_id": "c94e2016-ae6a-4d84-b6d0-7c50f828de42",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "service:coordinator-family-trip-2026-summer",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-family-trip-2026-summer:epoch-1"
+      },
+      "ts": "2026-04-06T17:58:21.201601Z",
+      "payload": {
+        "conflict_id": "c3325c4f-482c-4272-af36-ae3bd5ba3ada",
+        "category": "scope_overlap",
+        "severity": "medium",
+        "principal_a": "agent:mom-planner",
+        "principal_b": "agent:dad-planner",
+        "intent_a": "intent-mom-cultural-accommodation",
+        "intent_b": "intent-dad-driving-camping"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 10
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 9.210020542144775,
+    "direction": "inbound",
+    "from": "agent:kid-planner",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "4818ea5f-7d49-4c3d-925c-ca97525e1824",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:kid-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:kid-planner:dc3d175a-f554-4834-b908-03b2d471109b"
+      },
+      "ts": "2026-04-06T17:58:22.008188Z",
+      "payload": {
+        "intent_id": "intent-kid-theme-park-fun",
+        "objective": "Plan one full day at Hello Kitty Park in Anji and one day of free play activities including water fun and unstructured time for exploration.",
+        "scope": {
+          "kind": "task_set",
+          "task_ids": [
+            "itinerary://day-2",
+            "itinerary://day-4",
+            "budget://activities"
+          ]
+        },
+        "ttl_sec": 3600,
+        "assumptions": [
+          "Hello Kitty Park will be the main theme park experience",
+          "Water activities can be combined with free play day",
+          "Family will stay in Anji area for easy access to theme park",
+          "Activities budget of ¥3,000 allows for theme park tickets plus other fun activities"
+        ],
+        "priority": "high"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 2
+      }
+    }
+  },
+  {
+    "ts": 9.210401773452759,
+    "direction": "outbound",
+    "message_type": "CONFLICT_REPORT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_REPORT",
+      "message_id": "359307ff-69c9-4d77-b308-95fbfc370473",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "service:coordinator-family-trip-2026-summer",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-family-trip-2026-summer:epoch-1"
+      },
+      "ts": "2026-04-06T17:58:22.009200Z",
+      "payload": {
+        "conflict_id": "d0910738-3ff0-4874-b8d8-d723ac3ce262",
+        "category": "scope_overlap",
+        "severity": "medium",
+        "principal_a": "agent:kid-planner",
+        "principal_b": "agent:dad-planner",
+        "intent_a": "intent-kid-theme-park-fun",
+        "intent_b": "intent-dad-driving-camping"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 12
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 9.210736274719238,
+    "direction": "outbound",
+    "message_type": "CONFLICT_REPORT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_REPORT",
+      "message_id": "70dca956-46d4-41fe-b03f-933593085c7d",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "service:coordinator-family-trip-2026-summer",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-family-trip-2026-summer:epoch-1"
+      },
+      "ts": "2026-04-06T17:58:22.009278Z",
+      "payload": {
+        "conflict_id": "27e3a9c5-5128-4876-954a-34eae1bc4359",
+        "category": "scope_overlap",
+        "severity": "medium",
+        "principal_a": "agent:kid-planner",
+        "principal_b": "agent:mom-planner",
+        "intent_a": "intent-kid-theme-park-fun",
+        "intent_b": "intent-mom-cultural-accommodation"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 13
+      },
+      "coordinator_epoch": 1
+    }
+  },
+  {
+    "ts": 20.641742706298828,
+    "direction": "inbound",
+    "from": "agent:mom-planner",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "f419d617-b41d-405b-b4aa-14aab197afee",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:mom-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:mom-planner:e4930cdb-54e9-4501-a4a9-8e4adf4f35e9"
+      },
+      "ts": "2026-04-06T17:58:33.436962Z",
+      "payload": {
+        "conflict_id": "c3325c4f-482c-4272-af36-ae3bd5ba3ada",
+        "ack_type": "disputed",
+        "position": "I understand Dad wants camping, but Mom needs clean, comfortable accommodations for cultural experiences and our 12-year-old. However, I can work with a hybrid approach: 3 nights in boutique minsu with cultural workshops, and 1 night glamping (luxury camping with proper facilities) that satisfies both adventure and comfort needs. The minsu can serve as our base for cultural activities while still allowing the camping experience Dad wants."
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 20.64191961288452,
+    "direction": "inbound",
+    "from": "agent:dad-planner",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "5cc6b9d8-e2ee-4efe-a89e-fc920e3aca95",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:dad-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:dad-planner:89971119-8475-4172-a515-bd7d92a8b466"
+      },
+      "ts": "2026-04-06T17:58:33.437335Z",
+      "payload": {
+        "conflict_id": "c3325c4f-482c-4272-af36-ae3bd5ba3ada",
+        "ack_type": "disputed",
+        "position": "I understand Mom wants 4 nights in Moganshan/Anji area, but as the driver and budget controller, I need to balance travel fatigue with our ¥15,000 total budget. Four nights of minsu accommodation plus cultural activities could strain our budget significantly. I propose a hybrid solution: 3 nights total with one camping night (free accommodation, saves ¥400-600) and two nights in a family-friendly minsu. This allows Mom's cultural experiences while maintaining budget control and giving our kid the camping adventure he'd love learning from."
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 29.205161094665527,
+    "direction": "inbound",
+    "from": "agent:kid-planner",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "53cd585b-1b38-4076-9aa3-991e239d300b",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:kid-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:kid-planner:dc3d175a-f554-4834-b908-03b2d471109b"
+      },
+      "ts": "2026-04-06T17:58:42.000334Z",
+      "payload": {
+        "conflict_id": "d0910738-3ff0-4874-b8d8-d723ac3ce262",
+        "ack_type": "accepted",
+        "position": "I see that Dad wants Day 2 for driving/camping setup and Day 3 for the camping experience in Moganshan. This actually works well with my plans! I can move the Hello Kitty Park visit to Day 4 (originally my free play day) and use Day 2 for travel time and some fun roadside activities. The camping night in Moganshan could be really exciting for Xiaoming - campfires and stargazing are on his wishlist! My free play day can be combined with the Anji theme park day or moved to Day 5."
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 3
+      }
+    }
+  },
+  {
+    "ts": 29.205324411392212,
+    "direction": "inbound",
+    "from": "agent:dad-planner",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "25f04128-00bb-43a7-829b-d1701e9dc6b5",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:dad-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:dad-planner:89971119-8475-4172-a515-bd7d92a8b466"
+      },
+      "ts": "2026-04-06T17:58:42.000643Z",
+      "payload": {
+        "conflict_id": "d0910738-3ff0-4874-b8d8-d723ac3ce262",
+        "ack_type": "disputed",
+        "position": "I understand the kid wants fun activities, but we need to balance this with nature experiences and budget control. The main conflict is over day 2 scheduling. I propose we relocate camping to day 3 instead, allowing day 2 for Hello Kitty Park as the kid wants. However, I need day 4 for a full hiking and nature education day in Moganshan to fulfill Dad's educational goals and love for outdoors. We can do a compromise route: Shanghai → Anji (day 2 theme park) → Moganshan camping (day 3 night) → Moganshan hiking and nature activities (day 4) → return Shanghai. This gives both priorities their dedicated time while maintaining driving distance limits."
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  },
+  {
+    "ts": 36.99222183227539,
+    "direction": "inbound",
+    "from": "agent:kid-planner",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "5ebacbc3-daf9-43ca-925d-f87e277e37a5",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:kid-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:kid-planner:dc3d175a-f554-4834-b908-03b2d471109b"
+      },
+      "ts": "2026-04-06T17:58:49.790365Z",
+      "payload": {
+        "conflict_id": "27e3a9c5-5128-4876-954a-34eae1bc4359",
+        "ack_type": "disputed",
+        "position": "While I understand Mom wants us to stay in Moganshan for cultural experiences, Xiaoming really has his heart set on Hello Kitty Park in Anji. However, I'm willing to work with Mom's accommodation preferences if we can find a creative solution. We could potentially stay at a family-friendly minsu in the Anji area (which is close to Moganshan) that offers some cultural elements like handicraft workshops. This would allow easy access to Hello Kitty Park while still giving Mom the cultural accommodation experience she wants. For day 2 and 4, we could do Hello Kitty Park on one day and combine cultural activities with water fun on the other day - maybe find a place with both traditional workshops AND a pool or water features."
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  },
+  {
+    "ts": 36.99231767654419,
+    "direction": "inbound",
+    "from": "agent:mom-planner",
+    "message_type": "CONFLICT_ACK",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "CONFLICT_ACK",
+      "message_id": "72d8ce8a-a37f-4341-8992-11876511cede",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:mom-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:mom-planner:e4930cdb-54e9-4501-a4a9-8e4adf4f35e9"
+      },
+      "ts": "2026-04-06T17:58:49.790664Z",
+      "payload": {
+        "conflict_id": "27e3a9c5-5128-4876-954a-34eae1bc4359",
+        "ack_type": "accepted",
+        "position": "I can work with Kid's theme park plan while maintaining cultural experiences. Day 2 Hello Kitty Park works perfectly - we can stay at a boutique minsu near Anji that offers cultural workshops in evenings. Day 4 free play can include local handicraft activities like bamboo weaving or tea picking that kids enjoy. This actually enhances our cultural immersion while giving the child their desired fun time."
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 4
+      }
+    }
+  },
+  {
+    "ts": 55.62588357925415,
+    "direction": "inbound",
+    "from": "agent:dad-planner",
+    "message_type": "OP_BATCH_COMMIT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_BATCH_COMMIT",
+      "message_id": "c7032fb9-19ac-4b41-bd58-b8fcdf1368cc",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:dad-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:dad-planner:89971119-8475-4172-a515-bd7d92a8b466"
+      },
+      "ts": "2026-04-06T17:59:08.424287Z",
+      "payload": {
+        "batch_id": "batch-dad-days23",
+        "atomicity": "all_or_nothing",
+        "operations": [
+          {
+            "op_id": "op-dad-day2",
+            "target": "itinerary://day-2",
+            "op_kind": "create",
+            "state_ref_before": "sha256:b3855f88637399cb",
+            "state_ref_after": "sha256:15a2becae28800aa",
+            "summary": "Day 2 plan"
+          },
+          {
+            "op_id": "op-dad-day3",
+            "target": "itinerary://day-3",
+            "op_kind": "create",
+            "state_ref_before": "sha256:567c3b2bf4748f29",
+            "state_ref_after": "sha256:edf1e2c45c26fedc",
+            "summary": "Day 3 plan"
+          }
+        ],
+        "intent_id": "intent-dad-driving-camping"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      }
+    }
+  },
+  {
+    "ts": 56.12838125228882,
+    "direction": "inbound",
+    "from": "agent:mom-planner",
+    "message_type": "OP_BATCH_COMMIT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_BATCH_COMMIT",
+      "message_id": "7bc84e40-3962-45cc-b137-2779e32c10f0",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:mom-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:mom-planner:e4930cdb-54e9-4501-a4a9-8e4adf4f35e9"
+      },
+      "ts": "2026-04-06T17:59:08.926567Z",
+      "payload": {
+        "batch_id": "batch-mom-days234",
+        "atomicity": "all_or_nothing",
+        "operations": [
+          {
+            "op_id": "op-mom-day2",
+            "target": "itinerary://day-2",
+            "op_kind": "create",
+            "state_ref_before": "sha256:15a2becae28800aa",
+            "state_ref_after": "sha256:91403d517499cc15",
+            "summary": "Day 2 plan"
+          },
+          {
+            "op_id": "op-mom-day3",
+            "target": "itinerary://day-3",
+            "op_kind": "create",
+            "state_ref_before": "sha256:edf1e2c45c26fedc",
+            "state_ref_after": "sha256:dde533d5c3e55470",
+            "summary": "Day 3 plan"
+          },
+          {
+            "op_id": "op-mom-day4",
+            "target": "itinerary://day-4",
+            "op_kind": "create",
+            "state_ref_before": "sha256:bbf8d084076878ad",
+            "state_ref_after": "sha256:4c6bb5e9199abb1a",
+            "summary": "Day 4 plan"
+          }
+        ],
+        "intent_id": "intent-mom-cultural-accommodation"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      }
+    }
+  },
+  {
+    "ts": 56.63160800933838,
+    "direction": "inbound",
+    "from": "agent:kid-planner",
+    "message_type": "OP_BATCH_COMMIT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "OP_BATCH_COMMIT",
+      "message_id": "d515d51a-9ac3-49ae-9e20-a9eb45b0e80a",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:kid-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:kid-planner:dc3d175a-f554-4834-b908-03b2d471109b"
+      },
+      "ts": "2026-04-06T17:59:09.429481Z",
+      "payload": {
+        "batch_id": "batch-kid-days24",
+        "atomicity": "all_or_nothing",
+        "operations": [
+          {
+            "op_id": "op-kid-day2",
+            "target": "itinerary://day-2",
+            "op_kind": "create",
+            "state_ref_before": "sha256:91403d517499cc15",
+            "state_ref_after": "sha256:5525116c18bdbf4c",
+            "summary": "Day 2 plan"
+          },
+          {
+            "op_id": "op-kid-day4",
+            "target": "itinerary://day-4",
+            "op_kind": "create",
+            "state_ref_before": "sha256:4c6bb5e9199abb1a",
+            "state_ref_after": "sha256:980ab7d931c1575f",
+            "summary": "Day 4 plan"
+          }
+        ],
+        "intent_id": "intent-kid-theme-park-fun"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 5
+      }
+    }
+  },
+  {
+    "ts": 57.13554120063782,
+    "direction": "inbound",
+    "from": "agent:dad-planner",
+    "message_type": "GOODBYE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "GOODBYE",
+      "message_id": "75ee1aa7-2554-4f28-91c0-bfb4fb43b772",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:dad-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:dad-planner:89971119-8475-4172-a515-bd7d92a8b466"
+      },
+      "ts": "2026-04-06T17:59:09.933467Z",
+      "payload": {
+        "reason": "session_complete",
+        "intent_disposition": "withdraw"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 6
+      }
+    }
+  },
+  {
+    "ts": 57.13572406768799,
+    "direction": "inbound",
+    "from": "agent:mom-planner",
+    "message_type": "GOODBYE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "GOODBYE",
+      "message_id": "22cf13a4-807e-4c9b-9b64-11982d54814a",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:mom-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:mom-planner:e4930cdb-54e9-4501-a4a9-8e4adf4f35e9"
+      },
+      "ts": "2026-04-06T17:59:09.933823Z",
+      "payload": {
+        "reason": "session_complete",
+        "intent_disposition": "withdraw"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 6
+      }
+    }
+  },
+  {
+    "ts": 57.135822772979736,
+    "direction": "inbound",
+    "from": "agent:kid-planner",
+    "message_type": "GOODBYE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "GOODBYE",
+      "message_id": "0c90f251-a7a5-4e20-a9c3-87f5cb482b11",
+      "session_id": "family-trip-2026-summer",
+      "sender": {
+        "principal_id": "agent:kid-planner",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:kid-planner:dc3d175a-f554-4834-b908-03b2d471109b"
+      },
+      "ts": "2026-04-06T17:59:09.934029Z",
+      "payload": {
+        "reason": "session_complete",
+        "intent_disposition": "withdraw"
+      },
+      "watermark": {
+        "kind": "lamport_clock",
+        "value": 6
+      }
+    }
+  }
+]

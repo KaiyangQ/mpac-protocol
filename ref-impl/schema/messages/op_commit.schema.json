@@ -1,0 +1,17 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/op_commit.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OP_COMMIT Payload",
+  "type": "object",
+  "required": ["op_id", "target", "op_kind", "state_ref_before", "state_ref_after"],
+  "properties": {
+    "op_id": { "type": "string" },
+    "intent_id": { "type": "string" },
+    "target": { "type": "string" },
+    "op_kind": { "type": "string" },
+    "state_ref_before": { "type": "string" },
+    "state_ref_after": { "type": "string" },
+    "change_ref": { "type": "string" },
+    "summary": { "type": "string" }
+  }
+}

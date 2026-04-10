@@ -1,0 +1,44 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/hello.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HELLO Payload",
+  "type": "object",
+  "required": ["display_name", "roles", "capabilities"],
+  "properties": {
+    "display_name": { "type": "string" },
+    "roles": { "type": "array", "items": { "type": "string", "enum": ["observer", "contributor", "reviewer", "owner", "arbiter"] } },
+    "capabilities": { "type": "array", "items": { "type": "string" } },
+    "credential": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "type": "string" },
+        "value": { "type": "string" },
+        "issuer": { "type": "string" },
+        "expires_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "required": ["model_id", "provider"],
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "description": "Full model identifier in provider/model format (e.g., anthropic/claude-sonnet-4.6)"
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider slug (e.g., anthropic, openai, google)"
+        }
+      },
+      "description": "Agent's AI model backend dependency. Optional; when present, enables backend health monitoring (Section 14.3.1)."
+    }
+  }
+}

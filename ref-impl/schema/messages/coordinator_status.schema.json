@@ -1,0 +1,97 @@
+{
+  "$id": "https://mpac-protocol.org/schema/messages/coordinator_status.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "COORDINATOR_STATUS Payload",
+  "type": "object",
+  "required": ["event", "coordinator_id", "session_health"],
+  "properties": {
+    "event": {
+      "type": "string",
+      "enum": ["heartbeat", "recovered", "handover", "assumed", "authorization", "backend_alert"],
+      "description": "Standard coordinator events: heartbeat (liveness), recovered (post-fault restart), handover (planned transfer), assumed (unplanned takeover), authorization (pre-commit operation approval), backend_alert (participant backend status change)."
+    },
+    "coordinator_id": { "type": "string" },
+    "session_health": {
+      "type": "string",
+      "enum": ["healthy", "degraded", "recovering"]
+    },
+    "active_participants": { "type": "integer", "minimum": 0 },
+    "open_conflicts": { "type": "integer", "minimum": 0 },
+    "snapshot_lamport_clock": { "type": "integer", "minimum": 0 },
+    "successor_coordinator_id": {
+      "type": "string",
+      "description": "Required when event=handover: principal ID of the successor coordinator."
+    },
+    "next_coordinator_epoch": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Required when event=handover: epoch the successor coordinator will assume."
+    },
+    "authorized_op_id": {
+      "type": "string",
+      "description": "Required when event=authorization: operation ID being authorized."
+    },
+    "authorized_batch_id": {
+      "type": "string",
+      "description": "Present when event=authorization and the operation belongs to a batch."
+    },
+    "authorized_by": {
+      "type": "string",
+      "description": "Required when event=authorization: principal ID of the authorizing coordinator."
+    },
+    "affected_principal": {
+      "type": "string",
+      "description": "Required when event=backend_alert: principal ID of the agent whose backend is affected."
+    },
+    "backend_detail": {
+      "type": "object",
+      "required": ["model_id", "provider_status"],
+      "properties": {
+        "model_id": { "type": "string" },
+        "provider_status": {
+          "type": "string",
+          "enum": ["operational", "degraded", "down", "unknown"]
+        },
+        "status_detail": { "type": ["string", "null"] },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "provider": { "type": "string" },
+              "status": { "type": "string" },
+              "suggested_model": { "type": "string" }
+            }
+          }
+        }
+      },
+      "description": "Required when event=backend_alert: backend health details (Section 14.3.1)."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "event": { "const": "handover" } }
+      },
+      "then": {
+        "required": ["successor_coordinator_id", "next_coordinator_epoch"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "event": { "const": "authorization" } }
+      },
+      "then": {
+        "required": ["authorized_op_id", "authorized_by"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "event": { "const": "backend_alert" } }
+      },
+      "then": {
+        "required": ["affected_principal", "backend_detail"]
+      }
+    }
+  ]
+}

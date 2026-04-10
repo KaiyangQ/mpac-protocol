@@ -1,0 +1,607 @@
+[
+  {
+    "step": 1,
+    "description": "Agent Alice joins session, declares backend dependency on Anthropic Claude",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:00:00Z",
+      "payload": {
+        "display_name": "Alice",
+        "roles": ["owner"],
+        "capabilities": ["intent.broadcast", "op.propose", "op.commit"],
+        "backend": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider": "anthropic"
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 1 }
+    }
+  },
+  {
+    "step": 2,
+    "description": "Coordinator returns SESSION_INFO with backend_health_policy enabled",
+    "direction": "outbound",
+    "message_type": "SESSION_INFO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "SESSION_INFO",
+      "message_id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "service:coordinator-backend-health-demo-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-backend-health-demo-001:epoch-1"
+      },
+      "ts": "2026-04-07T10:00:01Z",
+      "payload": {
+        "session_id": "backend-health-demo-001",
+        "protocol_version": "0.1.13",
+        "security_profile": "open",
+        "compliance_profile": "core",
+        "watermark_kind": "lamport_clock",
+        "execution_model": "post_commit",
+        "state_ref_format": "sha256",
+        "governance_policy": {
+          "require_acknowledgment": true,
+          "intent_expiry_grace_sec": 30.0
+        },
+        "liveness_policy": {
+          "heartbeat_interval_sec": 30.0,
+          "unavailability_timeout_sec": 90.0,
+          "backend_health_policy": {
+            "enabled": true,
+            "check_source": "https://aistatus.cc/api/check",
+            "check_interval_sec": 60,
+            "on_degraded": "warn",
+            "on_down": "suspend_and_claim",
+            "auto_switch": "allowed",
+            "allowed_providers": ["anthropic", "openai", "google"]
+          }
+        },
+        "participant_count": 1,
+        "granted_roles": ["owner"],
+        "identity_verified": true,
+        "compatibility_errors": []
+      },
+      "watermark": { "kind": "lamport_clock", "value": 2 }
+    }
+  },
+  {
+    "step": 3,
+    "description": "Agent Bob joins session, declares backend dependency on OpenAI GPT-4o",
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "HELLO",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HELLO",
+      "message_id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:inst-001"
+      },
+      "ts": "2026-04-07T10:00:05Z",
+      "payload": {
+        "display_name": "Bob",
+        "roles": ["contributor"],
+        "capabilities": ["intent.broadcast", "op.propose", "op.commit"],
+        "backend": {
+          "model_id": "openai/gpt-4o",
+          "provider": "openai"
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 3 }
+    }
+  },
+  {
+    "step": 4,
+    "description": "Alice announces intent and starts working — backend is operational",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "INTENT_ANNOUNCE",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_ANNOUNCE",
+      "message_id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:01:00Z",
+      "payload": {
+        "intent_id": "intent-alice-refactor",
+        "objective": "Refactor authentication module for better security",
+        "scope": { "kind": "file_set", "items": ["src/auth.py", "src/auth_test.py"] }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 5 }
+    }
+  },
+  {
+    "step": 5,
+    "description": "Alice sends heartbeat — backend operational, all normal",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:01:30Z",
+      "payload": {
+        "status": "working",
+        "active_intent_id": "intent-alice-refactor",
+        "summary": "Analyzing auth module structure",
+        "backend_health": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider_status": "operational",
+          "status_detail": null,
+          "checked_at": "2026-04-07T10:01:25Z",
+          "alternatives": []
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 7 }
+    }
+  },
+  {
+    "step": 6,
+    "description": "Alice sends heartbeat — Anthropic has degraded! aistatus.cc reports elevated error rates",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:02:30Z",
+      "payload": {
+        "status": "working",
+        "active_intent_id": "intent-alice-refactor",
+        "summary": "Generating refactored auth module",
+        "backend_health": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider_status": "degraded",
+          "status_detail": "Elevated error rates",
+          "checked_at": "2026-04-07T10:02:25Z",
+          "alternatives": [
+            { "provider": "openai", "status": "operational", "suggested_model": "openai/gpt-4o" },
+            { "provider": "google", "status": "operational", "suggested_model": "google/gemini-2.5-pro" }
+          ]
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 9 }
+    }
+  },
+  {
+    "step": 7,
+    "description": "Coordinator broadcasts backend_alert (on_degraded=warn) — warning only, no suspension",
+    "direction": "outbound",
+    "message_type": "COORDINATOR_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "COORDINATOR_STATUS",
+      "message_id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "service:coordinator-backend-health-demo-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-backend-health-demo-001:epoch-1"
+      },
+      "ts": "2026-04-07T10:02:31Z",
+      "coordinator_epoch": 1,
+      "payload": {
+        "event": "backend_alert",
+        "coordinator_id": "service:coordinator-backend-health-demo-001",
+        "session_health": "healthy",
+        "active_participants": 2,
+        "open_conflicts": 0,
+        "affected_principal": "agent:Alice",
+        "backend_detail": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider_status": "degraded",
+          "status_detail": "Elevated error rates",
+          "alternatives": [
+            { "provider": "openai", "status": "operational", "suggested_model": "openai/gpt-4o" },
+            { "provider": "google", "status": "operational", "suggested_model": "google/gemini-2.5-pro" }
+          ]
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 10 }
+    }
+  },
+  {
+    "step": 8,
+    "description": "Anthropic goes down completely — Alice reports major outage",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:03:30Z",
+      "payload": {
+        "status": "blocked",
+        "active_intent_id": "intent-alice-refactor",
+        "summary": "Backend unavailable — cannot generate code",
+        "backend_health": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider_status": "down",
+          "status_detail": "Major outage",
+          "checked_at": "2026-04-07T10:03:25Z",
+          "alternatives": [
+            { "provider": "openai", "status": "operational", "suggested_model": "openai/gpt-4o" },
+            { "provider": "google", "status": "operational", "suggested_model": "google/gemini-2.5-pro" }
+          ]
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 11 }
+    }
+  },
+  {
+    "step": 9,
+    "description": "Coordinator broadcasts backend_alert (on_down=suspend_and_claim) and suspends Alice's intent",
+    "direction": "outbound",
+    "message_type": "COORDINATOR_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "COORDINATOR_STATUS",
+      "message_id": "a1b2c3d4-0009-4000-8000-000000000009",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "service:coordinator-backend-health-demo-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-backend-health-demo-001:epoch-1"
+      },
+      "ts": "2026-04-07T10:03:31Z",
+      "coordinator_epoch": 1,
+      "payload": {
+        "event": "backend_alert",
+        "coordinator_id": "service:coordinator-backend-health-demo-001",
+        "session_health": "degraded",
+        "active_participants": 2,
+        "open_conflicts": 0,
+        "affected_principal": "agent:Alice",
+        "backend_detail": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider_status": "down",
+          "status_detail": "Major outage",
+          "alternatives": [
+            { "provider": "openai", "status": "operational", "suggested_model": "openai/gpt-4o" },
+            { "provider": "google", "status": "operational", "suggested_model": "google/gemini-2.5-pro" }
+          ]
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 12 }
+    }
+  },
+  {
+    "step": 10,
+    "description": "Alice switches to Google Gemini (auto_switch=allowed, google is in allowed_providers)",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "a1b2c3d4-0010-4000-8000-000000000010",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:04:00Z",
+      "payload": {
+        "status": "working",
+        "active_intent_id": "intent-alice-refactor",
+        "summary": "Switched backend — resuming code generation with Gemini",
+        "backend_health": {
+          "model_id": "google/gemini-2.5-pro",
+          "provider_status": "operational",
+          "status_detail": null,
+          "checked_at": "2026-04-07T10:03:55Z",
+          "alternatives": [],
+          "switched_from": "anthropic/claude-sonnet-4.6",
+          "switch_reason": "provider_down"
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 13 }
+    }
+  },
+  {
+    "step": 11,
+    "description": "Coordinator validates switch (google in allowed_providers), broadcasts notification",
+    "direction": "outbound",
+    "message_type": "COORDINATOR_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "COORDINATOR_STATUS",
+      "message_id": "a1b2c3d4-0011-4000-8000-000000000011",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "service:coordinator-backend-health-demo-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-backend-health-demo-001:epoch-1"
+      },
+      "ts": "2026-04-07T10:04:01Z",
+      "coordinator_epoch": 1,
+      "payload": {
+        "event": "backend_alert",
+        "coordinator_id": "service:coordinator-backend-health-demo-001",
+        "session_health": "healthy",
+        "active_participants": 2,
+        "open_conflicts": 0,
+        "affected_principal": "agent:Alice",
+        "backend_detail": {
+          "model_id": "google/gemini-2.5-pro",
+          "provider_status": "operational",
+          "status_detail": "Switched from anthropic/claude-sonnet-4.6 (provider_down)",
+          "alternatives": []
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 14 }
+    }
+  },
+  {
+    "step": 12,
+    "description": "Alice resumes work with new backend and commits successfully",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "a1b2c3d4-0012-4000-8000-000000000012",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:05:00Z",
+      "payload": {
+        "status": "working",
+        "active_intent_id": "intent-alice-refactor",
+        "summary": "Completing auth refactor with Gemini backend",
+        "backend_health": {
+          "model_id": "google/gemini-2.5-pro",
+          "provider_status": "operational",
+          "status_detail": null,
+          "checked_at": "2026-04-07T10:04:55Z",
+          "alternatives": []
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 15 }
+    }
+  },
+
+  {
+    "step": 13,
+    "description": "Bob claims Alice's suspended intent (intent was suspended at step 9 due to backend down)",
+    "direction": "inbound",
+    "from": "agent:Bob",
+    "message_type": "INTENT_CLAIM",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_CLAIM",
+      "message_id": "a1b2c3d4-0013-4000-8000-000000000013",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Bob",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Bob:inst-001"
+      },
+      "ts": "2026-04-07T10:05:30Z",
+      "payload": {
+        "claim_id": "claim-bob-auth-refactor",
+        "original_intent_id": "intent-alice-refactor",
+        "original_principal_id": "agent:Alice",
+        "new_intent_id": "intent-bob-auth-refactor",
+        "objective": "Continue auth module refactor (claimed from Alice due to backend outage)",
+        "scope": { "kind": "file_set", "items": ["src/auth.py", "src/auth_test.py"] },
+        "justification": "Alice's Anthropic backend went down; continuing refactor with OpenAI GPT-4o"
+      },
+      "watermark": { "kind": "lamport_clock", "value": 16 }
+    }
+  },
+  {
+    "step": 14,
+    "description": "Coordinator approves the claim — Alice's intent is terminated, Bob's new intent is active",
+    "direction": "outbound",
+    "message_type": "INTENT_CLAIM_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "INTENT_CLAIM_STATUS",
+      "message_id": "a1b2c3d4-0014-4000-8000-000000000014",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "service:coordinator-backend-health-demo-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-backend-health-demo-001:epoch-1"
+      },
+      "ts": "2026-04-07T10:05:31Z",
+      "payload": {
+        "claim_id": "claim-bob-auth-refactor",
+        "original_intent_id": "intent-alice-refactor",
+        "new_intent_id": "intent-bob-auth-refactor",
+        "decision": "approved",
+        "approved_by": "auto:owner_unavailable"
+      },
+      "watermark": { "kind": "lamport_clock", "value": 17 }
+    }
+  },
+  {
+    "step": 15,
+    "description": "Alice attempts to switch to DeepSeek (not in allowed_providers) — gets BACKEND_SWITCH_DENIED",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HEARTBEAT",
+    "note": "Alice tries to switch to deepseek/deepseek-v3, which is NOT in allowed_providers [anthropic, openai, google]",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "a1b2c3d4-0015-4000-8000-000000000015",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:06:00Z",
+      "payload": {
+        "status": "working",
+        "summary": "Attempting switch to DeepSeek",
+        "backend_health": {
+          "model_id": "deepseek/deepseek-v3",
+          "provider_status": "operational",
+          "checked_at": "2026-04-07T10:05:55Z",
+          "alternatives": [],
+          "switched_from": "google/gemini-2.5-pro",
+          "switch_reason": "manual"
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 18 }
+    }
+  },
+  {
+    "step": 16,
+    "description": "Coordinator rejects the switch — deepseek is not in allowed_providers whitelist",
+    "direction": "outbound",
+    "message_type": "PROTOCOL_ERROR",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "PROTOCOL_ERROR",
+      "message_id": "a1b2c3d4-0016-4000-8000-000000000016",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "service:coordinator-backend-health-demo-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-backend-health-demo-001:epoch-1"
+      },
+      "ts": "2026-04-07T10:06:01Z",
+      "payload": {
+        "error_code": "BACKEND_SWITCH_DENIED",
+        "description": "Provider 'deepseek' is not in allowed_providers: [\"anthropic\", \"openai\", \"google\"]"
+      },
+      "watermark": { "kind": "lamport_clock", "value": 19 }
+    }
+  },
+  {
+    "step": 17,
+    "description": "Anthropic recovers — Alice reports operational status and switches back from Gemini",
+    "direction": "inbound",
+    "from": "agent:Alice",
+    "message_type": "HEARTBEAT",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "HEARTBEAT",
+      "message_id": "a1b2c3d4-0017-4000-8000-000000000017",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "agent:Alice",
+        "principal_type": "agent",
+        "sender_instance_id": "agent:Alice:inst-001"
+      },
+      "ts": "2026-04-07T10:10:00Z",
+      "payload": {
+        "status": "idle",
+        "summary": "Anthropic recovered — switching back to Claude",
+        "backend_health": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider_status": "operational",
+          "status_detail": null,
+          "checked_at": "2026-04-07T10:09:55Z",
+          "alternatives": [],
+          "switched_from": "google/gemini-2.5-pro",
+          "switch_reason": "manual"
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 20 }
+    }
+  },
+  {
+    "step": 18,
+    "description": "Coordinator validates switch-back (anthropic in allowed_providers) — session fully recovered",
+    "direction": "outbound",
+    "message_type": "COORDINATOR_STATUS",
+    "envelope": {
+      "protocol": "MPAC",
+      "version": "0.1.13",
+      "message_type": "COORDINATOR_STATUS",
+      "message_id": "a1b2c3d4-0018-4000-8000-000000000018",
+      "session_id": "backend-health-demo-001",
+      "sender": {
+        "principal_id": "service:coordinator-backend-health-demo-001",
+        "principal_type": "service",
+        "sender_instance_id": "service:coordinator-backend-health-demo-001:epoch-1"
+      },
+      "ts": "2026-04-07T10:10:01Z",
+      "coordinator_epoch": 1,
+      "payload": {
+        "event": "backend_alert",
+        "coordinator_id": "service:coordinator-backend-health-demo-001",
+        "session_health": "healthy",
+        "active_participants": 2,
+        "open_conflicts": 0,
+        "affected_principal": "agent:Alice",
+        "backend_detail": {
+          "model_id": "anthropic/claude-sonnet-4.6",
+          "provider_status": "operational",
+          "status_detail": "Switched back from google/gemini-2.5-pro (manual)",
+          "alternatives": []
+        }
+      },
+      "watermark": { "kind": "lamport_clock", "value": 21 }
+    }
+  }
+]

@@ -346,14 +346,30 @@ CURRENT CONTENT:
 Return the complete fixed Python file."""
 
         result = self._ask_claude(system, user, max_tokens=4096)
-        if result.startswith("```"):
-            lines = result.split("\n")
-            if lines[-1].strip() == "```":
-                lines = lines[1:-1]
-            elif lines[0].startswith("```"):
-                lines = lines[1:]
-            result = "\n".join(lines)
+        result = self._extract_code(result)
         return result
+
+    @staticmethod
+    def _extract_code(text: str) -> str:
+        """Extract code from Claude response, stripping markdown fences and explanations."""
+        # Find the last ```-fenced code block (most likely the complete file)
+        import re
+        blocks = list(re.finditer(
+            r"```(?:python|py)?\s*\n(.*?)```",
+            text, re.DOTALL,
+        ))
+        if blocks:
+            # Use the last (or longest) fenced block — that's the full file
+            best = max(blocks, key=lambda m: len(m.group(1)))
+            return best.group(1).rstrip("\n")
+
+        # No fenced block — strip a leading ``` line and trailing ``` if present
+        lines = text.split("\n")
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        return "\n".join(lines)
 
     # ── MPAC message helpers ───────────────────────────────────
 

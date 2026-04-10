@@ -137,10 +137,17 @@ Return the complete fixed file. Only fix what matches your objective — don't t
     )
     result = resp.content[0].text
 
-    # Strip markdown fences if Claude wraps them anyway
-    if result.startswith("```"):
+    # Strip markdown fences and explanation text if Claude wraps them
+    import re
+    blocks = list(re.finditer(
+        r"```(?:python|py)?\s*\n(.*?)```",
+        result, re.DOTALL,
+    ))
+    if blocks:
+        best = max(blocks, key=lambda m: len(m.group(1)))
+        result = best.group(1).rstrip("\n")
+    elif result.startswith("```"):
         lines = result.split("\n")
-        # Remove first line (```python) and last line (```)
         if lines[-1].strip() == "```":
             lines = lines[1:-1]
         elif lines[0].startswith("```"):

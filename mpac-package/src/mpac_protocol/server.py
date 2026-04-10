@@ -211,8 +211,24 @@ class MPACServer:
                 # Process through MPAC coordinator
                 responses = self.coordinator.process_message(data)
 
+                # Broadcast inbound messages that other agents should see.
+                # The coordinator returns [] on success for these types,
+                # so the server must relay the original message explicitly.
+                rejected = any(
+                    r.get("message_type") == "PROTOCOL_ERROR" for r in responses
+                )
+                if not rejected and msg_type in (
+                    "OP_COMMIT", "INTENT_ANNOUNCE", "INTENT_WITHDRAW",
+                ):
+                    broadcast_msg = json.loads(json.dumps(data))
+                    # Strip bulky file content from OP_COMMIT before broadcast
+                    if msg_type == "OP_COMMIT":
+                        broadcast_msg.get("payload", {}).pop("file_changes", None)
+                    log.info(f">> {msg_type} broadcast from {sender_id}")
+                    await self._broadcast(json.dumps(broadcast_msg, ensure_ascii=False))
+
                 # If OP_COMMIT succeeded and carries file_changes, update FileStore
-                if msg_type == "OP_COMMIT":
+                if msg_type == "OP_COMMIT" and not rejected:
                     file_changes = data.get("payload", {}).get("file_changes", {})
                     if file_changes:
                         await self._apply_file_changes(file_changes, sender_id)

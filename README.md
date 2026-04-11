@@ -1,5 +1,7 @@
 # MPAC — Multi-Principal Agent Coordination Protocol
 
+> **You're on the public release branch.** This is a curated snapshot of MPAC v0.1.13 — protocol specification, two reference implementations, the pip-installable `mpac_protocol` package, and a worked two-machine collaboration example under [`examples/two_machine_demo/`](./examples/two_machine_demo/). Active development happens on the [`main`](https://github.com/KaiyangQ/Agent_talking/tree/main) branch.
+
 **When multiple AI agents — serving different people — need to work together, who coordinates them?**
 
 MPAC is an application-layer protocol that provides coordination semantics for AI agents serving **multiple independent principals**. It handles the gap that MCP (tool invocation) and A2A (single-principal delegation) don't cover: structured coordination across organizational and trust boundaries.
@@ -93,6 +95,22 @@ python run.py ws://<host-ip>:8766    # use the URL the host printed
 ```
 
 LAN and ngrok modes, custom workspace directories, and troubleshooting are all covered in [`examples/two_machine_demo/README.md`](./examples/two_machine_demo/README.md). You can point `--workspace` at any directory you want to share — the pip package does not bundle any workspace files of its own.
+
+### MPACAgent API
+
+The pip package exposes the full MPAC protocol through `MPACAgent`:
+
+| Method | Protocol Feature |
+|--------|-----------------|
+| `execute_task(task)` | Full autonomous workflow: intent → conflict check → fix → commit |
+| `do_propose(intent_id, op_id, target)` | Pre-commit authorization (OP_PROPOSE → COORDINATOR_STATUS) |
+| `propose_and_commit(...)` | Complete pre-commit flow (propose → auth → commit) |
+| `do_claim_intent(...)` | Fault recovery: take over a crashed agent's suspended intent |
+| `do_escalate_conflict(...)` | Escalate a dispute to a designated arbiter |
+| `do_resolve_conflict(...)` | Arbiter renders a binding resolution |
+| `do_ack_conflict(...)` | Acknowledge or dispute a conflict |
+
+Agents support custom `roles` (owner, arbiter, contributor) and content-agnostic operation (code, documents, config files, or any text).
 
 ### Read the Spec
 

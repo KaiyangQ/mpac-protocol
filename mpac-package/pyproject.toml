@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "MPAC (Multi-Principal Agent Coordination Protocol) — coordinate multiple AI agents serving different principals over shared state"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 authors = [
     {name = "Kaiyang Qian", email = "kaiyang.2.qian@ucdenver.edu"},
 ]
@@ -20,7 +20,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",

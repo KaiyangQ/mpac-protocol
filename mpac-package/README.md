@@ -71,6 +71,8 @@ async def main():
         api_key="sk-ant-...",
         model="claude-sonnet-4-6",
         role_description="Collaborative AI agent operated by Bob",
+        roles=["contributor"],       # optional: owner, arbiter, contributor
+        principal_id="agent:Bob",    # optional: custom identity
     )
     await agent.connect("ws://192.168.1.42:8766", "collab-session-001")
     await agent.run_interactive()
@@ -101,16 +103,39 @@ python run.py                        # prints the WebSocket URL to share
 
 - `mpac_protocol.MPACServer` — WebSocket coordinator + workspace
   `FileStore`. One constructor argument (`workspace_dir`) decides what
-  directory to share; everything else has sensible defaults.
-- `mpac_protocol.MPACAgent` — Interactive Claude-backed agent. Joins a
-  session over WebSocket, shows the shared workspace in a CLI, lets the
-  user give natural-language tasks, generates fixes via the Anthropic
-  API, and commits them through the full MPAC protocol (intent
-  announcement, conflict detection, optimistic concurrency control).
+  directory to share; everything else has sensible defaults. Supports
+  `post_commit` and `pre_commit` execution models, `core` and
+  `governance` compliance profiles.
+- `mpac_protocol.MPACAgent` — Claude-backed agent with both interactive
+  and programmatic APIs. Content-agnostic: works with code, documents,
+  config files, or any text.
 - `mpac_protocol.core.*` — Lower-level building blocks if you want to
   embed MPAC into your own agent runtime instead of using `MPACAgent`:
   `SessionCoordinator`, state machines, envelopes, scope objects,
   watermarks, principal models.
+
+### MPACAgent API
+
+High-level workflows:
+
+| Method | Description |
+|--------|------------|
+| `run_interactive()` | Interactive CLI: view files, give tasks, see diffs |
+| `execute_task(task)` | Programmatic: intent → conflict check → fix → commit |
+| `run_task(task)` | Full lifecycle: HELLO → execute_task → GOODBYE |
+
+Extended protocol operations:
+
+| Method | Protocol Feature |
+|--------|-----------------|
+| `do_propose(intent_id, op_id, target)` | Pre-commit authorization (OP_PROPOSE) |
+| `propose_and_commit(...)` | Complete pre-commit flow (propose → auth → commit) |
+| `do_claim_intent(...)` | Fault recovery: take over a crashed agent's intent |
+| `do_escalate_conflict(...)` | Escalate a dispute to a designated arbiter |
+| `do_resolve_conflict(...)` | Arbiter renders a binding resolution |
+| `do_ack_conflict(...)` | Acknowledge or dispute a conflict |
+| `do_heartbeat(status)` | Maintain liveness |
+| `do_update_intent(...)` | Modify intent scope or objective mid-session |
 
 ## Protocol specification
 
@@ -130,7 +155,7 @@ byte-identical wire format).
 ## Status
 
 **Draft / experimental.** The protocol is at v0.1.13. This package is
-at 0.1.0. Not yet stable for production interoperability — intended for
+at 0.1.1. Not yet stable for production interoperability — intended for
 reference implementations, research prototypes, and early ecosystem
 feedback.
 

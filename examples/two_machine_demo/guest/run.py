@@ -102,8 +102,14 @@ async def main():
         role_description=f"Collaborative AI agent operated by {args.name} (guest)",
     )
 
+    # Transport-specific headers (e.g. ngrok free-tier browser warning)
+    headers = {}
+    if "ngrok" in coordinator_uri:
+        headers["ngrok-skip-browser-warning"] = "true"
+
     try:
-        await agent.connect(coordinator_uri, args.session_id)
+        await agent.connect(coordinator_uri, args.session_id,
+                            extra_headers=headers or None)
     except Exception as e:
         print(f"\n  ERROR: cannot connect to {coordinator_uri}")
         print(f"  {e}")

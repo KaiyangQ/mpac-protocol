@@ -126,14 +126,20 @@ class MPACAgent:
 
     # ── WebSocket communication ────────────────────────────────
 
-    async def connect(self, uri: str, session_id: str):
-        """Connect to MPAC server."""
+    async def connect(self, uri: str, session_id: str,
+                      extra_headers: dict = None):
+        """Connect to MPAC server.
+
+        Args:
+            uri: WebSocket URI (ws:// or wss://).
+            session_id: MPAC session to join.
+            extra_headers: Optional HTTP headers passed to the WebSocket
+                handshake.  Use this for transport-specific requirements
+                (e.g. tunnel authentication tokens).
+        """
         self.session_id = session_id
-        # Add ngrok header for free-tier compatibility
-        headers = {}
-        if "ngrok" in uri:
-            headers["ngrok-skip-browser-warning"] = "true"
-        self.ws = await websockets.connect(uri, additional_headers=headers)
+        self.ws = await websockets.connect(
+            uri, additional_headers=extra_headers or {})
         self._listener_task = asyncio.create_task(self._listen())
         self.log.info(f"Connected to {uri}")
 

@@ -152,10 +152,23 @@ cross-tested against an independent TypeScript reference implementation
 in the same repository (14 messages exchanged bidirectionally with
 byte-identical wire format).
 
+## Scope — protocol, not platform
+
+MPAC defines **what agents say to each other**: intent declarations,
+conflict detection, resolution negotiation, causal-context commits, and
+governance authority. It does not prescribe how the underlying network
+is provisioned. The reference runtime uses WebSocket as a convenient
+default transport, but the coordinator can sit behind any infrastructure
+you choose — a LAN socket, an SSH tunnel, a cloud relay, a mesh VPN, or
+a managed WebSocket service. Networking, deployment topology, and
+infrastructure automation are engineering concerns outside the protocol
+boundary; MPAC intentionally stays silent on them so that implementers
+are free to make their own trade-offs.
+
 ## Status
 
 **Draft / experimental.** The protocol is at v0.1.13. This package is
-at 0.1.1. Not yet stable for production interoperability — intended for
+at 0.1.0. Not yet stable for production interoperability — intended for
 reference implementations, research prototypes, and early ecosystem
 feedback.
 

@@ -99,24 +99,60 @@ cp config.example.json config.json   # add your Anthropic API key
 python run.py                        # prints the WebSocket URL to share
 ```
 
-## What's in the package
+## API reference
 
-- `mpac_protocol.MPACServer` — WebSocket coordinator + workspace
-  `FileStore`. One constructor argument (`workspace_dir`) decides what
-  directory to share; everything else has sensible defaults. Supports
-  `post_commit` and `pre_commit` execution models, `core` and
-  `governance` compliance profiles.
-- `mpac_protocol.MPACAgent` — Claude-backed agent with both interactive
-  and programmatic APIs. Content-agnostic: works with code, documents,
-  config files, or any text.
-- `mpac_protocol.core.*` — Lower-level building blocks if you want to
-  embed MPAC into your own agent runtime instead of using `MPACAgent`:
-  `SessionCoordinator`, state machines, envelopes, scope objects,
-  watermarks, principal models.
+### MPACServer
 
-### MPACAgent API
+```python
+MPACServer(
+    session_id:    str,
+    host:          str  = "0.0.0.0",
+    port:          int  = 8766,
+    workspace_dir: str | None = None,   # directory to share; None = empty workspace
+    # Optional coordinator tuning (passed via **kwargs):
+    execution_model:          str   = "post_commit",   # or "pre_commit"
+    compliance_profile:       str   = "core",           # or "governance"
+    security_profile:         str   = "open",           # or "authenticated", "verified"
+    unavailability_timeout_sec: float = 90.0,
+    resolution_timeout_sec:     float = 300.0,
+    intent_claim_grace_sec:     float = 0.0,
+    role_policy:              dict | None = None,
+)
+```
 
-High-level workflows:
+Call `await server.run()` to start listening. The server loads every
+text file under `workspace_dir` into an in-memory `FileStore`, skipping
+VCS metadata, build caches, and binary files automatically.
+
+### MPACAgent
+
+```python
+MPACAgent(
+    name:             str,
+    api_key:          str,               # Anthropic API key
+    model:            str  = "claude-sonnet-4-6",
+    role_description: str | None = None,
+    roles:            list[str] | None = None,       # default: ["contributor"]
+    principal_id:     str | None = None,              # default: "agent:{name}"
+)
+```
+
+#### Connection
+
+```python
+await agent.connect(
+    uri:           str,            # ws:// or wss:// — any WebSocket endpoint
+    session_id:    str,
+    extra_headers: dict | None = None,  # transport-specific HTTP headers
+)
+```
+
+The protocol is transport-agnostic. Pass any reachable WebSocket URI —
+LAN address, SSH tunnel, Cloudflare Tunnel, Tailscale, or any relay
+service. Use `extra_headers` for transports that require custom HTTP
+headers during the handshake.
+
+#### High-level workflows
 
 | Method | Description |
 |--------|------------|
@@ -124,7 +160,7 @@ High-level workflows:
 | `execute_task(task)` | Programmatic: intent → conflict check → fix → commit |
 | `run_task(task)` | Full lifecycle: HELLO → execute_task → GOODBYE |
 
-Extended protocol operations:
+#### Extended protocol operations
 
 | Method | Protocol Feature |
 |--------|-----------------|
@@ -136,6 +172,13 @@ Extended protocol operations:
 | `do_ack_conflict(...)` | Acknowledge or dispute a conflict |
 | `do_heartbeat(status)` | Maintain liveness |
 | `do_update_intent(...)` | Modify intent scope or objective mid-session |
+
+### Lower-level building blocks
+
+If you want to embed MPAC into your own agent runtime instead of using
+`MPACAgent`, the `mpac_protocol.core` module exposes:
+`SessionCoordinator`, state machines, envelopes, scope objects,
+watermarks, and principal models.
 
 ## Protocol specification
 

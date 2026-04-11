@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mpac-protocol"
-version = "0.1.1"
+version = "0.1.0"
 description = "MPAC (Multi-Principal Agent Coordination Protocol) — coordinate multiple AI agents serving different principals over shared state"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -37,12 +37,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/KaiyangQ/Agent_talking"
-Repository = "https://github.com/KaiyangQ/Agent_talking"
-"Release branch" = "https://github.com/KaiyangQ/Agent_talking/tree/opensource"
-Specification = "https://github.com/KaiyangQ/Agent_talking/blob/opensource/SPEC.md"
-"Two-machine demo" = "https://github.com/KaiyangQ/Agent_talking/tree/opensource/examples/two_machine_demo"
-Issues = "https://github.com/KaiyangQ/Agent_talking/issues"
+Homepage = "https://github.com/KaiyangQ/mpac-protocol"
+Repository = "https://github.com/KaiyangQ/mpac-protocol"
+Specification = "https://github.com/KaiyangQ/mpac-protocol/blob/main/SPEC.md"
+"Two-machine demo" = "https://github.com/KaiyangQ/mpac-protocol/tree/main/examples/two_machine_demo"
+Issues = "https://github.com/KaiyangQ/mpac-protocol/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

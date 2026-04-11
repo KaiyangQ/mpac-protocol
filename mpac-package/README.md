@@ -85,7 +85,7 @@ asyncio.run(main())
 
 A complete, copy-paste end-to-end example for two people on two
 different computers lives in the repo at
-[`examples/two_machine_demo/`](https://github.com/KaiyangQ/Agent_talking/tree/opensource/examples/two_machine_demo).
+[`examples/two_machine_demo/`](https://github.com/KaiyangQ/mpac-protocol/tree/main/examples/two_machine_demo).
 It ships a host `run.py`, a guest `run.py`, a sample workspace with
 three buggy Python files, and a README walking through both LAN mode
 (same WiFi) and Internet mode (ngrok).
@@ -93,7 +93,7 @@ three buggy Python files, and a README walking through both LAN mode
 Clone and try it:
 
 ```bash
-git clone --branch opensource https://github.com/KaiyangQ/Agent_talking.git mpac
+git clone https://github.com/KaiyangQ/mpac-protocol.git mpac
 cd mpac/examples/two_machine_demo/host
 cp config.example.json config.json   # add your Anthropic API key
 python run.py                        # prints the WebSocket URL to share
@@ -139,7 +139,7 @@ Extended protocol operations:
 
 ## Protocol specification
 
-The full normative specification is [`SPEC.md`](https://github.com/KaiyangQ/Agent_talking/blob/opensource/SPEC.md)
+The full normative specification is [`SPEC.md`](https://github.com/KaiyangQ/mpac-protocol/blob/main/SPEC.md)
 on the `opensource` branch — 30 sections covering all five layers
 (Session, Intent, Operation, Conflict, Governance), 21 message types,
 three state machines with normative transition tables, two execution
@@ -161,13 +161,12 @@ feedback.
 
 ## License
 
-Apache-2.0. See [`LICENSE`](https://github.com/KaiyangQ/Agent_talking/blob/opensource/LICENSE).
+Apache-2.0. See [`LICENSE`](https://github.com/KaiyangQ/mpac-protocol/blob/main/LICENSE).
 
 ## Links
 
-- [GitHub repository](https://github.com/KaiyangQ/Agent_talking)
-- [Release branch (opensource)](https://github.com/KaiyangQ/Agent_talking/tree/opensource)
-- [v0.1.13 release notes](https://github.com/KaiyangQ/Agent_talking/releases/tag/v0.1.13)
-- [Specification (SPEC.md)](https://github.com/KaiyangQ/Agent_talking/blob/opensource/SPEC.md)
-- [Two-machine demo](https://github.com/KaiyangQ/Agent_talking/tree/opensource/examples/two_machine_demo)
-- [Report an issue](https://github.com/KaiyangQ/Agent_talking/issues)
+- [GitHub repository](https://github.com/KaiyangQ/mpac-protocol)
+- [v0.1.13 release notes](https://github.com/KaiyangQ/mpac-protocol/releases/tag/v0.1.13)
+- [Specification (SPEC.md)](https://github.com/KaiyangQ/mpac-protocol/blob/main/SPEC.md)
+- [Two-machine demo](https://github.com/KaiyangQ/mpac-protocol/tree/main/examples/two_machine_demo)
+- [Report an issue](https://github.com/KaiyangQ/mpac-protocol/issues)

@@ -1,6 +1,10 @@
 # mpac-protocol
 
+[![arXiv](https://img.shields.io/badge/arXiv-2604.09744-b31b1b.svg)](https://arxiv.org/abs/2604.09744)
+
 **Multi-Principal Agent Coordination Protocol — Python reference runtime.**
+
+📄 **Paper:** [MPAC: A Multi-Principal Agent Coordination Protocol for Interoperable Multi-Agent Collaboration](https://arxiv.org/abs/2604.09744) (arXiv:2604.09744)
 
 When multiple AI agents — each serving a different person, team, or
 organization — need to work together over shared state, existing

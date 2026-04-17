@@ -1,7 +1,7 @@
 """Session coordinator for MPAC."""
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 import re
 import uuid
 
@@ -31,6 +31,42 @@ from .watermark import LamportClock
 
 
 PROTOCOL_VERSION = "0.1.13"
+
+
+# ────────────────────────────────────────────────────────────────
+# Authenticated profile: credential verification API (Section 23.1.4)
+# ────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class VerifyResult:
+    """Outcome of a credential verification attempt.
+
+    Returned by a ``CredentialVerifier`` callable to tell the coordinator
+    whether a HELLO should be accepted under the Authenticated/Verified
+    security profile, and optionally which roles the credential grants.
+    """
+
+    accepted: bool
+    reason: Optional[str] = None
+    granted_roles: Optional[List[str]] = None
+
+    @classmethod
+    def accept(cls, granted_roles: Optional[List[str]] = None) -> "VerifyResult":
+        """Accept the credential; optionally override granted roles."""
+        return cls(accepted=True, granted_roles=granted_roles)
+
+    @classmethod
+    def reject(cls, reason: str) -> "VerifyResult":
+        """Reject the credential with a human-readable reason."""
+        return cls(accepted=False, reason=reason)
+
+
+# Signature of a credential verifier. Given the HELLO ``credential`` payload
+# and the session id being joined, return a ``VerifyResult``. Verifiers are
+# synchronous — HELLO processing runs inside ``SessionCoordinator.process_message``
+# which is itself synchronous.
+CredentialVerifier = Callable[[Dict[str, Any], str], VerifyResult]
 
 
 def _now() -> datetime:
@@ -157,6 +193,7 @@ class SessionCoordinator:
         role_policy: Optional[Dict[str, Any]] = None,
         replay_window_sec: float = 300.0,
         backend_health_policy: Optional[Dict[str, Any]] = None,
+        credential_verifier: Optional[CredentialVerifier] = None,
     ):
         if execution_model == "pre_commit" and compliance_profile != ComplianceProfile.GOVERNANCE.value:
             raise ValueError("pre_commit sessions require Governance Profile compliance")
@@ -192,6 +229,7 @@ class SessionCoordinator:
         self.role_policy: Optional[Dict[str, Any]] = role_policy
         self.replay_window_sec = replay_window_sec
         self._backend_health_policy: Optional[Dict[str, Any]] = backend_health_policy
+        self.credential_verifier: Optional[CredentialVerifier] = credential_verifier
         self.lifecycle_policy = {
             "auto_close": False,
             "auto_close_grace_sec": 60,
@@ -409,7 +447,8 @@ class SessionCoordinator:
         payload = envelope.payload
         requested_roles = payload.get("roles", ["participant"])
 
-        # Credential validation for Authenticated/Verified profiles
+        # Credential validation for Authenticated/Verified profiles (Section 23.1.4)
+        verifier_result: Optional[VerifyResult] = None
         if self.security_profile != "open":
             credential = payload.get("credential")
             if not credential or not credential.get("type") or not credential.get("value"):
@@ -419,10 +458,30 @@ class SessionCoordinator:
                     f"Security profile '{self.security_profile}' requires a valid credential in HELLO",
                 )]
 
-        # Role policy evaluation (Section 23.1.5)
-        granted_roles = self._evaluate_role_policy(
-            envelope.sender.principal_id, envelope.sender.principal_type, requested_roles,
-        )
+            # If a verifier is configured, actually verify the credential value
+            # and (optionally) derive granted roles from it. Without a verifier,
+            # the existing "credential field is present" check stands in —
+            # preserving backward compatibility with mpac 0.1.0 behavior.
+            if self.credential_verifier is not None:
+                verifier_result = self.credential_verifier(credential, self.session_id)
+                if not verifier_result.accepted:
+                    return [self._make_protocol_error(
+                        "CREDENTIAL_REJECTED",
+                        envelope.message_id,
+                        verifier_result.reason
+                        or f"Credential rejected for session {self.session_id}",
+                    )]
+
+        # Role evaluation: verifier-supplied roles (if any) override role_policy.
+        # This lets bearer-token deployments pin roles per-token without
+        # maintaining a separate role_policy table.
+        if verifier_result is not None and verifier_result.granted_roles is not None:
+            granted_roles = verifier_result.granted_roles
+        else:
+            # Role policy evaluation (Section 23.1.5)
+            granted_roles = self._evaluate_role_policy(
+                envelope.sender.principal_id, envelope.sender.principal_type, requested_roles,
+            )
 
         # If no roles were granted, reject the HELLO (e.g. no role policy in
         # Authenticated/Verified profile, or all requested roles denied)

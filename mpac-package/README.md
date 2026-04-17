@@ -29,7 +29,7 @@ from the specification.
 ## Install
 
 ```bash
-pip install mpac-protocol
+pip install mpac
 ```
 
 Python 3.9+ required. The package depends on `websockets` and
@@ -212,12 +212,51 @@ infrastructure automation are engineering concerns outside the protocol
 boundary; MPAC intentionally stays silent on them so that implementers
 are free to make their own trade-offs.
 
+## Authenticated Profile (multi-tenant)
+
+mpac 0.2.0 adds opt-in support for the **Authenticated security profile** (Section 23.1.4 of the MPAC spec):
+
+- **`VerifyResult` + `CredentialVerifier`**: Pluggable credential verification hook on `SessionCoordinator`. Verifiers inspect the `credential` field in HELLO messages and return `VerifyResult.accept(granted_roles=[...])` or `VerifyResult.reject(reason)`.
+- **`MPACServer(multi_session=True)`**: Serve multiple isolated sessions from a single WebSocket port. Sessions are created lazily from the URL path `/session/<id>`. Each session gets its own `SessionCoordinator`, `FileStore`, and connection pool — no cross-session data leakage.
+
+```python
+from mpac_protocol.core.coordinator import VerifyResult
+
+def my_verifier(credential, session_id):
+    if credential.get("value") == "secret-tok" and session_id == "proj-alpha":
+        return VerifyResult.accept(granted_roles=["contributor"])
+    return VerifyResult.reject("not authorized")
+
+server = MPACServer(
+    multi_session=True,
+    host="0.0.0.0",
+    port=8766,
+    credential_verifier=my_verifier,
+    security_profile="authenticated",
+)
+```
+
+Single-session mode (`MPACServer(session_id="demo")`) is fully backward compatible with mpac 0.1.x — no code changes needed for existing callers.
+
 ## Status
 
 **Draft / experimental.** The protocol is at v0.1.13. This package is
-at 0.1.0. Not yet stable for production interoperability — intended for
+at 0.2.0. Not yet stable for production interoperability — intended for
 reference implementations, research prototypes, and early ecosystem
 feedback.
+
+### What's new in 0.2.0
+
+- **Authenticated profile credential verification** (SPEC §23.1.4):
+  `SessionCoordinator(credential_verifier=...)` lets integrators plug in
+  bearer-token / JWT / API-key verifiers that inspect HELLO credentials
+  and return `accept(granted_roles=...)` / `reject(reason=...)`. Enables
+  real multi-tenant deployments with per-participant authorization.
+- **Multi-session mode** (`MPACServer(multi_session=True)`): one server
+  process hosts many independent sessions, routed by URL path
+  (`/session/<id>`). Each session gets its own coordinator, file store,
+  and connection pool — zero cross-session state leakage.
+- Open-profile behavior is 100% backward compatible with 0.1.0.
 
 ## License
 

@@ -330,6 +330,13 @@ class Scope:
     task_ids: Optional[List[str]] = None   # for task_set
     pattern: Optional[str] = None          # for resource_path
     canonical_uris: Optional[List[str]] = None
+    # Section 15.2 of SPEC.md defines ``extensions`` as the generic escape
+    # hatch for implementation-specific scope data. v0.2.1 uses it to carry
+    # the cross-file dependency impact set under ``extensions["impact"]`` so
+    # the coordinator can surface ``dependency_breakage`` conflicts when
+    # another principal touches a file that this scope's edits affect.
+    # Unknown extension keys are preserved for forward-compat + audit.
+    extensions: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict."""
@@ -344,11 +351,19 @@ class Scope:
             d["pattern"] = self.pattern
         if self.canonical_uris is not None:
             d["canonical_uris"] = self.canonical_uris
+        if self.extensions:  # skip empty dicts too — they add noise to logs
+            d["extensions"] = self.extensions
         return d
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Scope":
-        """Create from dict."""
+        """Create from dict.
+
+        Unknown fields (anything not listed in SPEC.md §13.1 Scope Object)
+        are silently dropped — this is what keeps mixed 0.2.0/0.2.1 clients
+        interoperable. An 0.2.0 coordinator receiving an envelope with
+        ``extensions`` just ignores it and falls back to path-level overlap.
+        """
         return cls(
             kind=data["kind"],
             resources=data.get("resources"),
@@ -356,6 +371,7 @@ class Scope:
             task_ids=data.get("task_ids"),
             pattern=data.get("pattern"),
             canonical_uris=data.get("canonical_uris"),
+            extensions=data.get("extensions"),
         )
 
 

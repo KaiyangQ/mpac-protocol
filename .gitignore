@@ -1,25 +1,74 @@
-# OS
 .DS_Store
-
-# Python
 __pycache__/
 *.pyc
 *.egg-info/
 .pytest_cache/
-
-# Node
-node_modules/
-dist/
-build/
-
-# API keys
+pytest-cache-files-*/
 local_config.json
-mpac-package/src/mpac_protocol.egg-info/
-examples/two_machine_demo/host/config.json
-examples/two_machine_demo/guest/config.json
+node_modules/
 
-# Runtime artifacts
+# Root-level Python venv used for local dogfooding against main.
+# (Sub-dir venvs like web-app/.venv/ are listed separately below.)
+/.venv/
+
+# Runtime artifacts from interop test
 ref-impl/demo/interop_messages/
+
+# Runtime artifacts from distributed demo
 ref-impl/demo/distributed/e2e_transcript.json
 ref-impl/demo/distributed/ws_demo_transcript.json
 ref-impl/demo/distributed/test_project/workdir/
+
+# Claude Code session config
+.claude/
+CLAUDE.md
+
+# MPAC package build artifacts
+mpac-package/build/
+mpac-package/dist/
+mpac-package/src/*.egg-info/
+
+# Two-machine demo: local venvs, configs with API keys, and output
+examples/two_machine_demo/host/.venv/
+examples/two_machine_demo/host/config.json
+examples/two_machine_demo/host/output/
+examples/two_machine_demo/guest/.venv/
+examples/two_machine_demo/guest/config.json
+
+# Starter kit build dir (but keep the zip for distribution)
+mpac-starter-kit/
+
+# mpac-mcp local venv and pytest cache
+mpac-mcp/.venv/
+mpac-mcp/.pytest_cache/
+
+# Local Claude Code MCP config (use claude_setup.py to regenerate)
+.mcp.json
+
+# Local scratch test outputs
+test_output/
+examples/two_machine_demo/host/workspace/meeting-notes.md
+
+# Web app: local dev artifacts
+web-app/.venv/
+web-app/api/mpac_web.db
+web-app/app/.next/
+web-app/app/.env.local
+# (node_modules already covered by top-level rule)
+
+# mpac-mcp build artifacts
+mpac-mcp/build/
+mpac-mcp/dist/
+mpac-mcp/src/*.egg-info/
+.build-venv/
+
+# Semi-public beta deploy state (generated invite codes — never commit)
+deploy/scripts/.invite-codes.txt
+deploy/scripts/.env
+
+# SSH / TLS private keys — never commit. Covers Lightsail *.pem, SSH keys,
+# and anything else that happens to drop in the repo with a key-ish suffix.
+*.pem
+*.key
+id_rsa
+id_ed25519

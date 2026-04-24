@@ -21,7 +21,12 @@ from .models import (
     Scope,
     Sender,
 )
-from .scope import scope_overlap, scope_contains
+from .scope import (
+    compute_dependency_detail as _compute_dependency_detail,
+    scope_contains,
+    scope_dependency_conflict,
+    scope_overlap,
+)
 from .state_machines import (
     ConflictStateMachine,
     IntentStateMachine,
@@ -1650,7 +1655,19 @@ class SessionCoordinator:
         new_intent: Intent,
         skip_existing_conflicts: bool = False,
     ) -> List[MessageEnvelope]:
-        """Create conflicts for overlapping active or suspended intents."""
+        """Create conflicts for overlapping active or suspended intents.
+
+        Two categories are emitted here:
+
+        * ``scope_overlap`` (SPEC.md §15.2.1.1): same-resource overlap,
+          the classical case — unchanged since v0.1.x.
+        * ``dependency_breakage`` (SPEC.md §17.5 + v0.2.1 detection rule):
+          no shared resources but one scope's ``extensions.impact`` (the
+          reverse-dep set computed by the client analyzer) includes a file
+          the other scope is about to edit. Gracefully a no-op when neither
+          side populated ``impact`` — e.g. an 0.2.0 client talking to this
+          coordinator.
+        """
         responses: List[MessageEnvelope] = []
 
         for other in self.intents.values():
@@ -1658,7 +1675,15 @@ class SessionCoordinator:
                 continue
             if other.state_machine.current_state not in (IntentState.ACTIVE, IntentState.SUSPENDED):
                 continue
-            if not scope_overlap(new_intent.scope, other.scope):
+
+            overlap = scope_overlap(new_intent.scope, other.scope)
+            # Only check for dependency-breakage when there's no direct overlap;
+            # same-file overlap already dominates and stays category=scope_overlap.
+            dep_conflict = (
+                not overlap
+                and scope_dependency_conflict(new_intent.scope, other.scope)
+            )
+            if not overlap and not dep_conflict:
                 continue
 
             if skip_existing_conflicts and any(
@@ -1672,10 +1697,11 @@ class SessionCoordinator:
             ):
                 continue
 
+            category = "scope_overlap" if overlap else "dependency_breakage"
             conflict_id = str(uuid.uuid4())
             conflict = Conflict(
                 conflict_id=conflict_id,
-                category="scope_overlap",
+                category=category,
                 severity="medium",
                 principal_a=new_intent.principal_id,
                 principal_b=other.principal_id,
@@ -1685,17 +1711,26 @@ class SessionCoordinator:
                 related_intents=[new_intent.intent_id, other.intent_id],
             )
             self.conflicts[conflict_id] = conflict
+
+            # v0.2.3: attach symbol-level detail when we can derive it,
+            # so the UI can say "Alice's edits to utils.foo affect your
+            # main.py" instead of just "dependency conflict".
+            payload: Dict[str, Any] = {
+                "conflict_id": conflict_id,
+                "category": category,
+                "severity": "medium",
+                "principal_a": new_intent.principal_id,
+                "principal_b": other.principal_id,
+                "intent_a": new_intent.intent_id,
+                "intent_b": other.intent_id,
+            }
+            if category == "dependency_breakage":
+                detail = _compute_dependency_detail(new_intent.scope, other.scope)
+                if detail:
+                    payload["dependency_detail"] = detail
             responses.append(self._make_envelope(
                 MessageType.CONFLICT_REPORT.value,
-                {
-                    "conflict_id": conflict_id,
-                    "category": "scope_overlap",
-                    "severity": "medium",
-                    "principal_a": new_intent.principal_id,
-                    "principal_b": other.principal_id,
-                    "intent_a": new_intent.intent_id,
-                    "intent_b": other.intent_id,
-                },
+                payload,
             ))
 
         return responses

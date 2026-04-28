@@ -855,8 +855,40 @@ class SessionCoordinator:
             expires_at=now + timedelta(seconds=float(ttl_sec)) if ttl_sec is not None else None,
             last_message_id=envelope.message_id,
         )
+
+        # Auto-supersede prior ACTIVE intents from the SAME principal on
+        # overlapping scope. A relay process that crashes after announce_intent
+        # but before withdraw_intent (e.g. content-filter blocks the followup
+        # write) leaves an orphan; without this cleanup, the next chat message
+        # from the same user would announce a fresh intent on the same file
+        # and the orphan would just sit there forever. Same-principal +
+        # overlap is a strong signal the principal is retrying the same task —
+        # treat the new announce as implicit withdrawal of the older one.
+        # The cascade + auto-dismiss calls match _handle_intent_withdraw so
+        # downstream operations and stale conflicts get cleaned up uniformly.
+        responses: List[MessageEnvelope] = []
+        superseded_ids: List[str] = []
+        for other in list(self.intents.values()):
+            if other.intent_id == intent.intent_id:
+                continue
+            if other.principal_id != intent.principal_id:
+                continue
+            if other.state_machine.current_state != IntentState.ACTIVE:
+                continue
+            if not scope_overlap(other.scope, intent.scope):
+                continue
+            try:
+                other.state_machine.transition("WITHDRAWN")
+            except ValueError:
+                continue
+            superseded_ids.append(other.intent_id)
+        for sid in superseded_ids:
+            responses.extend(self._cascade_intent_termination(sid))
+
         self.intents[intent.intent_id] = intent
-        responses = self._detect_scope_overlaps(intent)
+        responses.extend(self._detect_scope_overlaps(intent))
+        if superseded_ids:
+            responses.extend(self._check_auto_dismiss())
 
         # Partial overlap warning (Section 18.6.2: SHOULD accept but MUST warn)
         if frozen_action == "warn":
@@ -1672,6 +1704,13 @@ class SessionCoordinator:
 
         for other in self.intents.values():
             if other.intent_id == new_intent.intent_id:
+                continue
+            # Same-principal intents never conflict with themselves. The earlier
+            # symptom was "Dave's Claude ↔ Dave's Claude" appearing in the UI
+            # when a relay re-announced after a prior subprocess crashed before
+            # withdrawing — see _handle_intent_announce auto-supersede below for
+            # the upstream cleanup.
+            if other.principal_id == new_intent.principal_id:
                 continue
             if other.state_machine.current_state not in (IntentState.ACTIVE, IntentState.SUSPENDED):
                 continue

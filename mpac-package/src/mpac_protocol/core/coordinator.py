@@ -1033,7 +1033,7 @@ class SessionCoordinator:
         # Replace any existing deferral with the same id (idempotent retries).
         self.deferrals[deferral.deferral_id] = deferral
 
-        return [self._make_envelope(
+        responses: List[MessageEnvelope] = [self._make_envelope(
             MessageType.INTENT_DEFERRED.value,
             {
                 "deferral_id": deferral.deferral_id,
@@ -1048,6 +1048,69 @@ class SessionCoordinator:
                 "expires_at": deferral.expires_at.isoformat() if deferral.expires_at else None,
             },
         )]
+
+        # v0.2.7: if every observed target is ALREADY terminal at the moment
+        # the defer arrives, emit the resolved broadcast right away. Without
+        # this, the deferral sits in the registry until TTL expiry (60s by
+        # default) because no future intent transition will trigger
+        # _cleanup_deferrals_for_terminated_intent — there's nothing left to
+        # transition. Real-world trigger: a slow agent yields after the
+        # observed peer's intent has already withdrawn (e.g. Bob's Claude
+        # takes 14s to call defer_intent while Alice's 12s task already
+        # finished). Before this fix the yield-chip hangs visibly for 60s.
+        if self._observed_targets_all_terminal(deferral):
+            del self.deferrals[deferral.deferral_id]
+            responses.append(self._make_envelope(
+                MessageType.INTENT_DEFERRED.value,
+                {
+                    "deferral_id": deferral.deferral_id,
+                    "principal_id": deferral.principal_id,
+                    "status": "resolved",
+                    "reason": "observed_intents_terminated",
+                },
+            ))
+
+        return responses
+
+    def _observed_targets_all_terminal(self, deferral: "Deferral") -> bool:
+        """True iff every observed_intent_id / observed_principal of this
+        deferral refers to an intent that no longer exists or is already in
+        a terminal state.
+
+        Mirrors the matching axes used by
+        :meth:`_cleanup_deferrals_for_terminated_intent` — direct intent_id,
+        observed_principals, AND the pre-0.2.6 mislabel where principal_ids
+        were stuffed into observed_intent_ids — so the "fast resolve"
+        decision agrees with the "lazy cleanup" decision.
+
+        Returns False if the deferral observed nothing at all
+        (``observed_intent_ids`` and ``observed_principals`` both empty).
+        That's a degenerate input — we'd rather let the chip TTL out than
+        silently disappear, so the user notices their agent emitted a
+        defer with no target attached.
+        """
+        if not deferral.observed_intent_ids and not deferral.observed_principals:
+            return False
+
+        # Watched intent_ids: alive iff the intent exists AND not terminal.
+        for iid in deferral.observed_intent_ids:
+            intent = self.intents.get(iid)
+            if intent is not None and not intent.state_machine.is_terminal():
+                return False
+
+        # Watched principals (and the pre-0.2.6 mislabel: principal_ids
+        # accidentally placed in observed_intent_ids): alive iff that
+        # principal owns ANY intent that's still active.
+        principal_candidates = (
+            set(deferral.observed_principals) | set(deferral.observed_intent_ids)
+        )
+        if principal_candidates:
+            for other in self.intents.values():
+                if (other.principal_id in principal_candidates
+                        and not other.state_machine.is_terminal()):
+                    return False
+
+        return True
 
     def _cleanup_deferrals_for_terminated_intent(
         self, terminated_intent_id: str,

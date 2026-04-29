@@ -305,6 +305,130 @@ def test_deferral_resolves_via_observed_principals():
     assert "defer-bob-principal" not in coord.deferrals
 
 
+def test_deferral_resolves_immediately_when_observed_intent_already_terminal():
+    """v0.2.7: if the observed intent has ALREADY withdrawn by the time
+    the defer message arrives, the coordinator must emit `resolved`
+    in the SAME response — not wait for TTL.
+
+    Reproduces 2026-04-29 case-4 round 3 in prod: Bob's Claude took 14s
+    to call defer_intent and Alice's 12s task had already withdrawn. Pre-fix,
+    the deferral sat with status=active and the yield-chip hung in the
+    Conflicts panel until the 60s TTL fired. After fix, resolved is
+    emitted alongside the active broadcast so the client clears the chip
+    immediately.
+    """
+    session_id = "sess-deferred-late"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+
+    coord.process_message(alice.announce_intent(
+        session_id=session_id,
+        intent_id="intent-alice-1",
+        objective="alice",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+    ))
+    # Alice withdraws BEFORE Bob's defer arrives.
+    coord.process_message(alice.withdraw_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+    ))
+
+    responses = coord.process_message(bob.defer_intent(
+        session_id=session_id,
+        deferral_id="defer-bob-late",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+        observed_intent_ids=["intent-alice-1"],
+    ))
+
+    deferred = _filter(responses, MessageType.INTENT_DEFERRED.value)
+    statuses = [d["payload"].get("status", "active") for d in deferred]
+    # We expect BOTH the initial active broadcast AND the immediate
+    # resolved broadcast in the same response.
+    assert "resolved" in statuses, (
+        f"defer arriving after observed intent withdrew should resolve "
+        f"immediately, got statuses={statuses}"
+    )
+    # Deferral registry empty — no dangling entry waiting for TTL.
+    assert "defer-bob-late" not in coord.deferrals
+    # The resolved broadcast should attribute the resolution correctly.
+    resolved = [d for d in deferred if d["payload"].get("status") == "resolved"]
+    assert resolved[0]["payload"]["reason"] == "observed_intents_terminated"
+    assert resolved[0]["payload"]["principal_id"] == "bob"
+
+
+def test_deferral_with_some_observed_terminated_does_not_immediately_resolve():
+    """If only SOME of the observed intents are terminal at defer time,
+    keep the deferral alive — Bob is still yielding to whoever's left.
+    This guards against an over-eager 'resolve immediately' interpretation.
+    """
+    session_id = "sess-deferred-mixed"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    carol, hello_c = _make("carol", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+    coord.process_message(hello_c)
+
+    scope = Scope(kind="file_set", resources=["notes_app/db.py"])
+    coord.process_message(alice.announce_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+        objective="alice", scope=scope,
+    ))
+    coord.process_message(carol.announce_intent(
+        session_id=session_id, intent_id="intent-carol-1",
+        objective="carol", scope=scope,
+    ))
+    # Alice withdraws — Carol still active.
+    coord.process_message(alice.withdraw_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+    ))
+
+    responses = coord.process_message(bob.defer_intent(
+        session_id=session_id, deferral_id="defer-bob-mixed",
+        scope=scope,
+        observed_intent_ids=["intent-alice-1", "intent-carol-1"],
+    ))
+
+    deferred = _filter(responses, MessageType.INTENT_DEFERRED.value)
+    statuses = [d["payload"].get("status", "active") for d in deferred]
+    assert "resolved" not in statuses, (
+        f"deferral with at least one still-alive observed intent must "
+        f"NOT resolve immediately, got statuses={statuses}"
+    )
+    assert "defer-bob-mixed" in coord.deferrals
+
+
+def test_deferral_with_no_observed_targets_does_not_auto_resolve():
+    """Degenerate input: no observed_intent_ids and no observed_principals.
+    We don't auto-resolve — let TTL handle it so the user notices their
+    agent emitted a defer with nothing to attribute it to.
+    """
+    session_id = "sess-deferred-empty"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_b)
+
+    responses = coord.process_message(bob.defer_intent(
+        session_id=session_id, deferral_id="defer-bob-empty",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+        observed_intent_ids=[],
+        observed_principals=[],
+    ))
+
+    deferred = _filter(responses, MessageType.INTENT_DEFERRED.value)
+    statuses = [d["payload"].get("status", "active") for d in deferred]
+    assert "resolved" not in statuses, (
+        f"empty-observed defer should NOT auto-resolve, got statuses={statuses}"
+    )
+    assert "defer-bob-empty" in coord.deferrals
+
+
 def test_defer_intent_does_not_create_conflict_or_intent():
     """A deferral is not an intent — no scope claim, no conflict computation."""
     session_id = "sess-deferred-6"

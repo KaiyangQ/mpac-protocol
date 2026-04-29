@@ -717,6 +717,7 @@ MPAC v0.1 defines the following core message types:
 - `INTENT_ANNOUNCE`
 - `INTENT_UPDATE`
 - `INTENT_WITHDRAW`
+- `INTENT_DEFERRED` *(v0.2.5+)*
 - `INTENT_CLAIM`
 - `INTENT_CLAIM_STATUS`
 - `OP_PROPOSE`
@@ -843,6 +844,34 @@ At least one field besides `intent_id` SHOULD be present.
 |-------|------|-----|-------------|
 | `intent_id` | string | R | Intent to withdraw |
 | `reason` | string | O | Reason for withdrawal |
+
+#### `INTENT_DEFERRED` Payload *(v0.2.5+)*
+
+Two shapes share this message type. Active deferrals carry the full record; lifecycle follow-ups carry only the disposition.
+
+**Active form** (sent by the deferring participant; coordinator re-broadcasts with `principal_id` filled in):
+
+| Field | Type | Req | Description |
+|-------|------|-----|-------------|
+| `deferral_id` | string | R | Sender-chosen unique id |
+| `principal_id` | string | C | Filled in by the coordinator on broadcast; clients SHOULD omit when sending |
+| `scope` | Scope object | R | The scope the sender was about to claim before deciding to yield |
+| `reason` | string | O | Free-form rationale (e.g. `"yielded_to_active_editor"`) |
+| `observed_intent_ids` | string[] | O | Intent ids the sender saw on the scope |
+| `observed_principals` | string[] | O | Principal ids the sender saw working on the scope |
+| `ttl_sec` | number | O | TTL in seconds; default 60 |
+| `expires_at` | string | C | ISO timestamp; coordinator MUST add this on rebroadcast based on `received_at + ttl_sec` |
+
+**Resolution form** (emitted only by the coordinator):
+
+| Field | Type | Req | Description |
+|-------|------|-----|-------------|
+| `deferral_id` | string | R | Deferral being resolved |
+| `principal_id` | string | R | Original deferring principal |
+| `status` | string | R | `"resolved"` (observed intents terminated / principal announced) or `"expired"` (TTL fired) |
+| `reason` | string | O | Free-form, e.g. `"observed_intents_terminated"`, `"principal_announced"`, `"ttl"` |
+
+See Section 15.5.1 for full semantics, including the three-axis cleanup rule.
 
 #### `INTENT_CLAIM` Payload
 
@@ -1590,6 +1619,66 @@ Payload:
   "reason": "superseded_by_human_instruction"
 }
 ```
+
+### 15.5.1 `INTENT_DEFERRED` (v0.2.5+)
+
+Purpose:
+- record that a participant **observed** existing intent(s) on a scope and chose to **yield without announcing** one of their own.
+
+This is a one-sided **non-claiming** signal. It is distinct from `INTENT_ANNOUNCE` (no scope claim, no participation in conflict detection) and from `CONFLICT_REPORT` (no opposing pair). Its purpose is purely UX: sibling participants render a "yielded" hint in their conflicts surface so the human owner can see *"Bob saw Alice editing X and stepped back"*.
+
+Sender semantics:
+- Senders SHOULD call `INTENT_DEFERRED` when they encountered an active intent (e.g., via a coordinator-side or client-side overlap query) and decided to back off rather than announce.
+- A deferral does NOT count as an intent. It does NOT lock scope, MUST NOT trigger overlap detection, and MUST NOT block subsequent `INTENT_ANNOUNCE` calls from the same principal.
+
+Payload (active form, sent by the deferring participant):
+
+```json
+{
+  "deferral_id": "defer-bob-92a3...",
+  "scope": {"kind": "file_set", "resources": ["src/db.py"]},
+  "reason": "yielded_to_active_editor",
+  "observed_intent_ids": ["intent-alice-7c5b..."],
+  "observed_principals": ["alice"],
+  "ttl_sec": 60
+}
+```
+
+The coordinator stores the deferral, then emits an `INTENT_DEFERRED` envelope on the broadcast bus carrying `principal_id` (resolved from the sender) and the same fields plus an `expires_at` ISO timestamp. Coordinator-emitted variants:
+
+```json
+{
+  "deferral_id": "defer-bob-92a3...",
+  "principal_id": "bob",
+  "scope": {"kind": "file_set", "resources": ["src/db.py"]},
+  "reason": "yielded_to_active_editor",
+  "observed_intent_ids": ["intent-alice-7c5b..."],
+  "observed_principals": ["alice"],
+  "expires_at": "2026-04-29T01:23:45Z"
+}
+```
+
+Resolution / expiration follow-ups (also `INTENT_DEFERRED` envelopes) carry only the disposition:
+
+```json
+{ "deferral_id": "defer-bob-92a3...", "principal_id": "bob",
+  "status": "resolved", "reason": "observed_intents_terminated" }
+```
+
+```json
+{ "deferral_id": "defer-bob-92a3...", "principal_id": "bob",
+  "status": "expired", "reason": "ttl" }
+```
+
+Coordinator MUST clear a deferral and emit a `status: resolved` follow-up when ANY of the following becomes true:
+
+1. All intents listed in `observed_intent_ids` reach a terminal state.
+2. The same principal subsequently announces an intent (the principal is no longer yielding).
+3. The terminating intent's `principal_id` appears in `observed_principals`, OR appears in `observed_intent_ids` (defense-in-depth match for senders that conflated the two fields — common when a client built the request from a `check_overlap` response that pre-v0.2.6 did not surface `intent_id`).
+
+Coordinator MUST clear and emit a `status: expired` follow-up when wall-clock time exceeds the deferral's `expires_at`. Default TTL when sender omits `ttl_sec`: 60 seconds.
+
+Deferrals are NOT intents and have no formal state machine. They are ephemeral records intended for client UI hints; clients SHOULD also implement a local TTL sweep so missed broadcasts do not strand stale UI.
 
 ### 15.6 Intent Lifecycle
 

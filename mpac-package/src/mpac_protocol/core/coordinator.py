@@ -1056,19 +1056,50 @@ class SessionCoordinator:
         was watching it (and only it). If a deferral observed multiple
         intents and at least one is still alive, keep the deferral —
         the principal is still yielding to someone.
+
+        Matches on TWO axes for defense in depth:
+
+        1. Direct intent_id match — the original mechanism. Works when the
+           deferring agent passed proper intent_ids in observed_intent_ids.
+        2. **Principal_id match (v0.2.6+)** — Claude has been observed
+           passing principal_ids in the observed_intent_ids field by
+           mistake, because pre-0.2.6 ``check_overlap``'s response didn't
+           expose intent_id, so the agent had nothing better to forward.
+           To make cleanup work even on those degenerate inputs, we ALSO
+           clean up deferrals whose ``observed_principals`` includes the
+           terminating intent's principal. (Once 0.2.6 ships, both
+           channels feed correct intent_ids and this fallback is moot —
+           but it stays as belt-and-suspenders.)
         """
+        terminated_intent = self.intents.get(terminated_intent_id)
+        terminated_principal = (
+            terminated_intent.principal_id if terminated_intent else None
+        )
         responses: List[MessageEnvelope] = []
         for deferral_id, deferral in list(self.deferrals.items()):
-            if terminated_intent_id not in deferral.observed_intent_ids:
+            matched_intent = terminated_intent_id in deferral.observed_intent_ids
+            matched_principal = (
+                terminated_principal is not None
+                and terminated_principal in deferral.observed_principals
+            )
+            # Also accept the "principal_id mistakenly placed in
+            # observed_intent_ids" pattern that 0.2.5 + pre-0.2.6
+            # check_overlap caused in practice.
+            matched_principal_in_intents_field = (
+                terminated_principal is not None
+                and terminated_principal in deferral.observed_intent_ids
+            )
+            if not (matched_intent or matched_principal or matched_principal_in_intents_field):
                 continue
+
             still_alive = [
                 iid for iid in deferral.observed_intent_ids
                 if iid != terminated_intent_id
+                and iid != terminated_principal  # also strip mislabelled principal id if any
                 and self.intents.get(iid) is not None
                 and not self.intents[iid].state_machine.is_terminal()
             ]
             if still_alive:
-                # Other intents still alive — keep deferral, just trim list.
                 deferral.observed_intent_ids = still_alive
                 continue
             # All observed intents are gone. Drop the deferral and tell

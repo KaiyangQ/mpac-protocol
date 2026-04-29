@@ -228,6 +228,83 @@ def test_deferral_with_multiple_observed_intents_keeps_alive_until_all_terminate
     assert "defer-bob-1" not in coord.deferrals
 
 
+def test_deferral_resolves_when_principal_id_passed_as_observed_intent_id():
+    """v0.2.6 defense in depth: pre-0.2.6 check_overlap didn't expose
+    intent_id, so Claude was observed passing principal_ids in the
+    observed_intent_ids field. Cleanup should still fire when the
+    terminating intent's principal matches one of those bogus entries.
+    """
+    session_id = "sess-deferred-mislabel"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+    coord.process_message(alice.announce_intent(
+        session_id=session_id,
+        intent_id="intent-alice-1",
+        objective="alice",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+    ))
+
+    # Bob defers but passes ALICE'S PRINCIPAL_ID where intent_id was
+    # expected (the actual 0.2.5 production bug).
+    coord.process_message(bob.defer_intent(
+        session_id=session_id,
+        deferral_id="defer-bob-mislabel",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+        observed_intent_ids=["alice"],   # ← should have been "intent-alice-1"
+    ))
+    assert "defer-bob-mislabel" in coord.deferrals
+
+    # Alice withdraws → cleanup matches via the principal_id-in-intents-field fallback.
+    responses = coord.process_message(alice.withdraw_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+    ))
+
+    assert "defer-bob-mislabel" not in coord.deferrals, (
+        "principal-id-in-intents-field fallback should have cleaned up the deferral"
+    )
+    resolves = [
+        r for r in responses
+        if r.get("message_type") == MessageType.INTENT_DEFERRED.value
+        and r.get("payload", {}).get("status") == "resolved"
+    ]
+    assert len(resolves) == 1
+
+
+def test_deferral_resolves_via_observed_principals():
+    """Symmetric: when Claude DOES correctly pass principal_id in
+    observed_principals (not observed_intent_ids), cleanup also fires."""
+    session_id = "sess-deferred-principal"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+    coord.process_message(alice.announce_intent(
+        session_id=session_id,
+        intent_id="intent-alice-1",
+        objective="alice",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+    ))
+    coord.process_message(bob.defer_intent(
+        session_id=session_id,
+        deferral_id="defer-bob-principal",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+        observed_intent_ids=[],   # empty
+        observed_principals=["alice"],   # populated correctly
+    ))
+    assert "defer-bob-principal" in coord.deferrals
+
+    coord.process_message(alice.withdraw_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+    ))
+    assert "defer-bob-principal" not in coord.deferrals
+
+
 def test_defer_intent_does_not_create_conflict_or_intent():
     """A deferral is not an intent — no scope claim, no conflict computation."""
     session_id = "sess-deferred-6"

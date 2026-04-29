@@ -152,9 +152,18 @@ def test_supersede_only_triggers_on_overlap_not_disjoint_files():
     )
 
 
-def test_cross_principal_overlap_still_conflicts():
-    """The same-principal skip in _detect_scope_overlaps must not
-    accidentally suppress the legitimate Alice ↔ Dave case."""
+def test_cross_principal_same_file_announce_rejected_with_stale_intent():
+    """v0.2.8: cross-principal same-file announce is rejected with
+    STALE_INTENT (the race-lock contract), not silently merged into a
+    CONFLICT_REPORT.
+
+    Pre-0.2.8 behavior was to fire an advisory CONFLICT_REPORT and let
+    both intents coexist; v0.2.8 mirrors git's merge-conflict semantics
+    and rejects the second writer outright. The 'losing' agent's client
+    must call defer_intent and tell the user to wait.
+
+    Same-principal supersede (the 0.2.6 path) is unaffected — orphan
+    cleanup for the SAME user retrying still works."""
     session_id = "sess-self-4"
     coord = SessionCoordinator(session_id, security_profile="open")
 
@@ -177,22 +186,33 @@ def test_cross_principal_overlap_still_conflicts():
         scope=scope,
     ))
 
-    conflicts = _filter(responses, MessageType.CONFLICT_REPORT.value)
-    assert len(conflicts) == 1, (
-        "Expected exactly one Alice↔Dave conflict, got "
-        f"{[c['payload'] for c in conflicts]}"
-    )
-    payload = conflicts[0]["payload"]
-    principals = {payload["principal_a"], payload["principal_b"]}
-    assert principals == {"alice", "dave"}
+    # No CONFLICT_REPORT — race lock fires before _detect_scope_overlaps.
+    assert not _filter(responses, MessageType.CONFLICT_REPORT.value)
+
+    # Single PROTOCOL_ERROR with STALE_INTENT.
+    errors = [r for r in responses if r.get("message_type") == "PROTOCOL_ERROR"]
+    assert len(errors) == 1
+    err = errors[0]["payload"]
+    assert err.get("error_code") == "STALE_INTENT"
+    # Reason names the colliding intent so the client can defer correctly.
+    assert "intent-alice-1" in err.get("description", "")
+
+    # Dave's intent is NOT registered (the rejection is a hard reject,
+    # not a soft "accept and warn").
+    assert "intent-dave-1" not in coord.intents
+    # Alice's still alive.
+    assert "intent-alice-1" in coord.intents
+    assert coord.intents["intent-alice-1"].state_machine.current_state == IntentState.ACTIVE
 
 
 def test_orphan_after_retry_does_not_block_fresh_announce_with_third_party():
-    """Realistic recovery: Dave's first attempt orphans an intent (no
-    Alice involved at that point); Dave retries and his orphan is
-    superseded; then Alice arrives and announces the same file. The
-    resulting conflict must reference Dave's CURRENT intent (the retry),
-    not the dead orphan."""
+    """v0.2.8: Dave's orphan retry is superseded; then Alice arrives
+    and her same-file announce gets STALE_INTENT — but the rejection's
+    reason names Dave's CURRENT (retry) intent, NOT the dead orphan.
+
+    Pre-0.2.8 the assertion was on the resulting CONFLICT_REPORT; v0.2.8
+    rejects same-file race instead, so we validate the same anti-stale
+    invariant via the error message."""
     session_id = "sess-self-5"
     coord = SessionCoordinator(session_id, security_profile="open")
 
@@ -211,7 +231,7 @@ def test_orphan_after_retry_does_not_block_fresh_announce_with_third_party():
         scope=scope,
     ))
 
-    # Dave retries → supersede.
+    # Dave retries → 0.2.6 same-principal supersede path.
     coord.process_message(dave.announce_intent(
         session_id=session_id,
         intent_id="intent-dave-retry",
@@ -219,8 +239,7 @@ def test_orphan_after_retry_does_not_block_fresh_announce_with_third_party():
         scope=scope,
     ))
 
-    # Alice now announces — should conflict with the LIVE retry intent
-    # (not Dave's WITHDRAWN orphan).
+    # Alice now announces — race-locked against Dave's retry.
     responses = coord.process_message(alice.announce_intent(
         session_id=session_id,
         intent_id="intent-alice-1",
@@ -228,11 +247,165 @@ def test_orphan_after_retry_does_not_block_fresh_announce_with_third_party():
         scope=scope,
     ))
 
+    # No CONFLICT_REPORT (race lock pre-empts it); single STALE_INTENT.
+    assert not _filter(responses, MessageType.CONFLICT_REPORT.value)
+    errors = [r for r in responses if r.get("message_type") == "PROTOCOL_ERROR"]
+    assert len(errors) == 1
+    msg = errors[0]["payload"].get("description", "")
+    # Critical anti-stale invariant: reject must reference the LIVE retry,
+    # not the dead orphan.
+    assert "intent-dave-retry" in msg
+    assert "intent-dave-orphan" not in msg, (
+        "STALE_INTENT message must point at the live retry, not the "
+        "WITHDRAWN orphan"
+    )
+    # Alice's intent not registered.
+    assert "intent-alice-1" not in coord.intents
+
+
+# ── v0.2.8 race-lock additions: positive cases the lock must ALLOW ───
+
+
+def test_race_lock_does_not_block_dependency_breakage_announce():
+    """v0.2.8: the race lock fires ONLY for same-file overlap (would-be
+    scope_overlap). Cross-file dependency_breakage MUST still go through
+    as an advisory CONFLICT_REPORT — that's the entire point of the
+    category split (mirrors git: merge conflict rejects, semantic
+    conflict warns).
+    """
+    session_id = "sess-race-cross-file"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+
+    # Alice on db.py — scope.extensions.impact will include api.py
+    # (real notes_app reverse-dep), but raw scope only declares db.py.
+    coord.process_message(alice.announce_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+        objective="alice",
+        scope=Scope(
+            kind="file_set", resources=["notes_app/db.py"],
+            extensions={"impact": ["notes_app/api.py", "notes_app/cli.py"]},
+        ),
+    ))
+
+    # Bob on api.py — different file, but it's in Alice's impact.
+    responses = coord.process_message(bob.announce_intent(
+        session_id=session_id, intent_id="intent-bob-1",
+        objective="bob",
+        scope=Scope(kind="file_set", resources=["notes_app/api.py"]),
+    ))
+
+    # No PROTOCOL_ERROR — race lock did not fire (different files).
+    errors = [r for r in responses if r.get("message_type") == "PROTOCOL_ERROR"]
+    assert not errors, (
+        f"race lock must NOT block cross-file dependency_breakage, "
+        f"got errors={errors}"
+    )
+
+    # Bob's intent IS registered (the announce succeeded).
+    assert "intent-bob-1" in coord.intents
+
+    # An advisory CONFLICT_REPORT(category=dependency_breakage) fires.
     conflicts = _filter(responses, MessageType.CONFLICT_REPORT.value)
     assert len(conflicts) == 1
-    payload = conflicts[0]["payload"]
-    referenced = {payload["intent_a"], payload["intent_b"]}
-    assert "intent-dave-orphan" not in referenced, (
-        "fresh conflict must not reference the superseded orphan"
-    )
-    assert referenced == {"intent-alice-1", "intent-dave-retry"}
+    assert conflicts[0]["payload"]["category"] == "dependency_breakage"
+
+
+def test_race_lock_does_not_block_disjoint_files():
+    """Sanity: announcing on entirely unrelated files is unaffected."""
+    session_id = "sess-race-disjoint"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+
+    coord.process_message(alice.announce_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+        objective="alice",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+    ))
+    responses = coord.process_message(bob.announce_intent(
+        session_id=session_id, intent_id="intent-bob-1",
+        objective="bob",
+        scope=Scope(kind="file_set", resources=["notes_app/auth.py"]),
+    ))
+
+    errors = [r for r in responses if r.get("message_type") == "PROTOCOL_ERROR"]
+    assert not errors
+    assert "intent-bob-1" in coord.intents
+
+
+def test_race_lock_allows_same_principal_retry():
+    """v0.2.6 same-principal supersede path must remain intact: the same
+    user retrying the same file (e.g. after a relay subprocess crash
+    orphaned an intent) is NOT blocked by the v0.2.8 race lock — that
+    lock is cross-principal-only."""
+    session_id = "sess-race-same-principal"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    dave, hello_dave = _make("dave", session_id)
+    coord.process_message(hello_dave)
+
+    scope = Scope(kind="file_set", resources=["notes_app/db.py"])
+    coord.process_message(dave.announce_intent(
+        session_id=session_id, intent_id="intent-dave-orphan",
+        objective="first attempt", scope=scope,
+    ))
+    responses = coord.process_message(dave.announce_intent(
+        session_id=session_id, intent_id="intent-dave-retry",
+        objective="retry", scope=scope,
+    ))
+
+    # No PROTOCOL_ERROR — same-principal supersede, not race-lock.
+    assert not [r for r in responses if r.get("message_type") == "PROTOCOL_ERROR"]
+    # Retry registered, orphan superseded.
+    assert "intent-dave-retry" in coord.intents
+    assert coord.intents["intent-dave-orphan"].state_machine.current_state == IntentState.WITHDRAWN
+
+
+def test_race_lock_releases_on_first_intent_withdraw():
+    """After the first intent withdraws, the SAME other principal can
+    announce on that file successfully — the lock is tied to live state,
+    not to history."""
+    session_id = "sess-race-release"
+    coord = SessionCoordinator(session_id, security_profile="open")
+
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+
+    scope = Scope(kind="file_set", resources=["notes_app/db.py"])
+
+    # Alice first — succeeds.
+    coord.process_message(alice.announce_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+        objective="alice", scope=scope,
+    ))
+
+    # Bob is rejected (race lock).
+    rejected = coord.process_message(bob.announce_intent(
+        session_id=session_id, intent_id="intent-bob-rejected",
+        objective="bob attempt 1", scope=scope,
+    ))
+    assert any(r.get("message_type") == "PROTOCOL_ERROR" for r in rejected)
+    assert "intent-bob-rejected" not in coord.intents
+
+    # Alice withdraws — lock released.
+    coord.process_message(alice.withdraw_intent(
+        session_id=session_id, intent_id="intent-alice-1",
+    ))
+
+    # Bob retries — now succeeds.
+    accepted = coord.process_message(bob.announce_intent(
+        session_id=session_id, intent_id="intent-bob-retry",
+        objective="bob attempt 2", scope=scope,
+    ))
+    assert not [r for r in accepted if r.get("message_type") == "PROTOCOL_ERROR"]
+    assert "intent-bob-retry" in coord.intents

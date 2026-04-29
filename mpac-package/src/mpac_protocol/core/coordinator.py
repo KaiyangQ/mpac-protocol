@@ -899,6 +899,47 @@ class SessionCoordinator:
             last_message_id=envelope.message_id,
         )
 
+        # v0.2.8: cross-principal same-file race detection.
+        # Reject before any state mutation. Mirrors git's split between
+        # merge conflicts (must resolve before push) and semantic
+        # conflicts (warn + leave to CI):
+        #
+        #   * Same-file (scope_overlap)  → reject with STALE_INTENT.
+        #     Whoever finishes second would overwrite the first; this
+        #     is almost always a real conflict and the user expects
+        #     coordination, not a stale-data race. The losing agent's
+        #     client should call defer_intent + tell the user to wait.
+        #
+        #   * Cross-file dependency_breakage → NOT covered here. Falls
+        #     through to _detect_scope_overlaps below where it becomes
+        #     an advisory CONFLICT_REPORT. Cross-file deps are often
+        #     backward-compatible; rejecting every spoke whenever a
+        #     hub file is touched would kill collaboration in large
+        #     projects (mirrors the v0.2.11 prompt's category split).
+        #
+        # Order matters: this check fires BEFORE same-principal
+        # supersede so a rejected race doesn't leave half-cleared
+        # state behind. Same-principal supersede only happens once
+        # we know we're going to register the new intent.
+        proposed_files = set(scope.resources or []) if scope and scope.resources else set()
+        if proposed_files:
+            for other in self.intents.values():
+                if other.principal_id == intent.principal_id:
+                    continue
+                if other.state_machine.current_state != IntentState.ACTIVE:
+                    continue
+                other_files = set(other.scope.resources or []) if other.scope and other.scope.resources else set()
+                clashing = proposed_files & other_files
+                if clashing:
+                    return [self._make_protocol_error(
+                        "STALE_INTENT",
+                        envelope.message_id,
+                        f"Files {sorted(clashing)} are already being modified by intent "
+                        f"{other.intent_id} (principal {other.principal_id}). Call "
+                        f"defer_intent and tell the user to wait, or retry once the "
+                        f"other intent has withdrawn.",
+                    )]
+
         # Auto-supersede prior ACTIVE intents from the SAME principal on
         # overlapping scope. A relay process that crashes after announce_intent
         # but before withdraw_intent (e.g. content-filter blocks the followup

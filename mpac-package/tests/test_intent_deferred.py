@@ -186,9 +186,14 @@ def test_deferral_ttl_expiry():
 
 
 def test_deferral_with_multiple_observed_intents_keeps_alive_until_all_terminate():
-    """If Bob's deferral observes BOTH Alice's and Carol's intents on the
-    same file, withdrawing only Alice's shouldn't drop the deferral.
-    Bob is still yielding to Carol."""
+    """If Bob's deferral observes BOTH Alice's and Carol's intents,
+    withdrawing only Alice's shouldn't drop the deferral. Bob is still
+    yielding to Carol.
+
+    NOTE: Alice and Carol must announce on DIFFERENT files because
+    v0.2.8 race-locks cross-principal same-file announces. The deferral-
+    cleanup logic is independent of file overlap — it tracks intent_ids
+    in the deferral's observed_intent_ids list, not file scopes."""
     session_id = "sess-deferred-5"
     coord = SessionCoordinator(session_id, security_profile="open")
 
@@ -199,18 +204,19 @@ def test_deferral_with_multiple_observed_intents_keeps_alive_until_all_terminate
     coord.process_message(hello_b)
     coord.process_message(hello_c)
 
-    scope = Scope(kind="file_set", resources=["notes_app/db.py"])
     coord.process_message(alice.announce_intent(
         session_id=session_id, intent_id="intent-alice-1",
-        objective="alice", scope=scope,
+        objective="alice",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
     ))
     coord.process_message(carol.announce_intent(
         session_id=session_id, intent_id="intent-carol-1",
-        objective="carol", scope=scope,
+        objective="carol",
+        scope=Scope(kind="file_set", resources=["notes_app/api.py"]),
     ))
     coord.process_message(bob.defer_intent(
         session_id=session_id, deferral_id="defer-bob-1",
-        scope=scope,
+        scope=Scope(kind="file_set", resources=["notes_app/db.py", "notes_app/api.py"]),
         observed_intent_ids=["intent-alice-1", "intent-carol-1"],
     ))
 
@@ -362,8 +368,11 @@ def test_deferral_resolves_immediately_when_observed_intent_already_terminal():
 def test_deferral_with_some_observed_terminated_does_not_immediately_resolve():
     """If only SOME of the observed intents are terminal at defer time,
     keep the deferral alive — Bob is still yielding to whoever's left.
-    This guards against an over-eager 'resolve immediately' interpretation.
-    """
+
+    NOTE: Alice and Carol must announce on DIFFERENT files because
+    v0.2.8 race-locks cross-principal same-file announces. The
+    fast-resolve logic is independent of file overlap — it tracks
+    intent_ids in the deferral's observed_intent_ids list."""
     session_id = "sess-deferred-mixed"
     coord = SessionCoordinator(session_id, security_profile="open")
 
@@ -374,14 +383,15 @@ def test_deferral_with_some_observed_terminated_does_not_immediately_resolve():
     coord.process_message(hello_b)
     coord.process_message(hello_c)
 
-    scope = Scope(kind="file_set", resources=["notes_app/db.py"])
     coord.process_message(alice.announce_intent(
         session_id=session_id, intent_id="intent-alice-1",
-        objective="alice", scope=scope,
+        objective="alice",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
     ))
     coord.process_message(carol.announce_intent(
         session_id=session_id, intent_id="intent-carol-1",
-        objective="carol", scope=scope,
+        objective="carol",
+        scope=Scope(kind="file_set", resources=["notes_app/api.py"]),
     ))
     # Alice withdraws — Carol still active.
     coord.process_message(alice.withdraw_intent(
@@ -390,7 +400,7 @@ def test_deferral_with_some_observed_terminated_does_not_immediately_resolve():
 
     responses = coord.process_message(bob.defer_intent(
         session_id=session_id, deferral_id="defer-bob-mixed",
-        scope=scope,
+        scope=Scope(kind="file_set", resources=["notes_app/db.py", "notes_app/api.py"]),
         observed_intent_ids=["intent-alice-1", "intent-carol-1"],
     ))
 

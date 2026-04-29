@@ -794,9 +794,16 @@ def test_coordinator_reports_dependency_breakage_across_files():
     assert {payload["principal_a"], payload["principal_b"]} == {"alice", "bob"}
 
 
-def test_coordinator_still_reports_scope_overlap_for_direct_conflict():
-    """Regression: the classic same-file overlap case still produces
-    category=scope_overlap (not dependency_breakage)."""
+def test_coordinator_rejects_same_file_announce_with_stale_intent():
+    """v0.2.8: same-file (would-be scope_overlap) is now race-locked at
+    announce time — rejected with STALE_INTENT instead of fired as an
+    advisory CONFLICT_REPORT.
+
+    Pre-0.2.8 behavior was a CONFLICT_REPORT(category=scope_overlap)
+    that allowed both intents to coexist (both write → second overwrites
+    first). v0.2.8 mirrors git's merge-conflict semantics: the second
+    writer's announce is rejected outright, and the losing client must
+    call defer_intent + tell the user to wait."""
     session_id = "sess-dep-2"
     coord = SessionCoordinator(session_id, security_profile="open")
 
@@ -815,9 +822,14 @@ def test_coordinator_still_reports_scope_overlap_for_direct_conflict():
         bob.announce_intent(session_id, "intent-b", "edit", scope_b)
     )
 
-    conflict = _find_conflict(responses)
-    assert conflict is not None
-    assert conflict["payload"]["category"] == "scope_overlap"
+    # No CONFLICT_REPORT — race lock fires before _detect_scope_overlaps.
+    assert _find_conflict(responses) is None
+    # PROTOCOL_ERROR with STALE_INTENT.
+    errors = [r for r in responses if r.get("message_type") == "PROTOCOL_ERROR"]
+    assert len(errors) == 1
+    assert errors[0]["payload"].get("error_code") == "STALE_INTENT"
+    # Cross-file dependency_breakage path is unaffected (still advisory)
+    # — covered by other tests in this file.
 
 
 def test_coordinator_no_conflict_when_symbols_disjoint_v022():

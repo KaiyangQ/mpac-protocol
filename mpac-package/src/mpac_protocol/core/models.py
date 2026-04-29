@@ -165,6 +165,17 @@ class ErrorCode(Enum):
     CAUSAL_GAP = "CAUSAL_GAP"
     INTENT_BACKOFF = "INTENT_BACKOFF"
     BACKEND_SWITCH_DENIED = "BACKEND_SWITCH_DENIED"
+    # v0.2.8: cross-principal same-file race lock. Returned by the
+    # coordinator when an INTENT_ANNOUNCE arrives whose resources
+    # already overlap an ACTIVE intent owned by a DIFFERENT principal
+    # (i.e. a scope_overlap that would be a real conflict). Mirrors
+    # git's treatment of merge conflicts (reject + force resolve)
+    # vs semantic conflicts (warn + continue). Cross-file dependency
+    # overlap (dependency_breakage) is intentionally NOT covered —
+    # it remains advisory via CONFLICT_REPORT, because cross-file
+    # deps are often backward-compatible and mass-rejecting them
+    # would kill collaboration on hub modules.
+    STALE_INTENT = "STALE_INTENT"
 
 
 class BackendProviderStatus(Enum):

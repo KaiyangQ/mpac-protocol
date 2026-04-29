@@ -170,6 +170,38 @@ class Participant:
             payload["reason"] = reason
         return self._make(MessageType.INTENT_WITHDRAW.value, session_id, payload)
 
+    def defer_intent(
+        self,
+        session_id: str,
+        deferral_id: str,
+        scope: Scope,
+        reason: str = "yielded",
+        observed_intent_ids: Optional[list[str]] = None,
+        observed_principals: Optional[list[str]] = None,
+        ttl_sec: float = 60.0,
+    ) -> Dict[str, Any]:
+        """Record an observation that you saw an existing intent on
+        ``scope`` and chose to yield without announcing one of your own
+        (v0.2.5+, INTENT_DEFERRED). The coordinator stores it ephemerally
+        and broadcasts; siblings render a "yield" chip in their UI.
+
+        Distinct from announce_intent: no scope claim, no participation
+        in conflict detection. Distinct from withdraw_intent: there's no
+        intent to withdraw (you didn't announce). It's purely a UX hint
+        so siblings can see "Bob saw Alice editing X and yielded".
+        """
+        payload: Dict[str, Any] = {
+            "deferral_id": deferral_id,
+            "scope": scope.to_dict(),
+            "reason": reason,
+            "ttl_sec": ttl_sec,
+        }
+        if observed_intent_ids:
+            payload["observed_intent_ids"] = list(observed_intent_ids)
+        if observed_principals:
+            payload["observed_principals"] = list(observed_principals)
+        return self._make(MessageType.INTENT_DEFERRED.value, session_id, payload)
+
     def claim_intent(
         self,
         session_id: str,

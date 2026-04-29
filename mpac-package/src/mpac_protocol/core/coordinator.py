@@ -162,6 +162,29 @@ class Claim:
     objective: str
     scope: Scope
     justification: Optional[str] = None
+
+
+@dataclass
+class Deferral:
+    """A principal observed an existing intent and chose to yield without
+    announcing one of their own. Distinct from Intent (no scope claim,
+    no work in progress) and from Conflict (no opposing pair) — it's a
+    UX-level "I saw you working there, I'll come back later" signal so
+    sibling participants can render it in the conflicts panel.
+
+    Lives ephemerally: TTL-bounded, cleared when the observed intents
+    all reach terminal state, or when the deferring principal later
+    announces a real intent.
+    """
+
+    deferral_id: str
+    principal_id: str
+    scope: Scope
+    reason: str
+    observed_intent_ids: List[str] = field(default_factory=list)
+    observed_principals: List[str] = field(default_factory=list)
+    received_at: datetime = field(default_factory=_now)
+    expires_at: Optional[datetime] = None
     submitted_at: datetime = field(default_factory=_now)
     decision: str = "pending"
     approved_by: Optional[str] = None
@@ -220,6 +243,7 @@ class SessionCoordinator:
         self.operations: Dict[str, Operation] = {}
         self.conflicts: Dict[str, Conflict] = {}
         self.claims: Dict[str, Claim] = {}
+        self.deferrals: Dict[str, Deferral] = {}
         self.claim_index: Dict[str, Claim] = {}
         self.audit_log: List[Dict[str, Any]] = []
         self.lamport_clock = LamportClock()
@@ -319,6 +343,7 @@ class SessionCoordinator:
             MessageType.INTENT_ANNOUNCE.value: self._handle_intent_announce,
             MessageType.INTENT_UPDATE.value: self._handle_intent_update,
             MessageType.INTENT_WITHDRAW.value: self._handle_intent_withdraw,
+            MessageType.INTENT_DEFERRED.value: self._handle_intent_deferred,
             MessageType.INTENT_CLAIM.value: self._handle_intent_claim,
             MessageType.OP_PROPOSE.value: self._handle_op_propose,
             MessageType.OP_COMMIT.value: self._handle_op_commit,
@@ -341,7 +366,7 @@ class SessionCoordinator:
     # ================================================================
 
     def check_expiry(self, now: Optional[datetime] = None) -> List[Dict[str, Any]]:
-        """Check intents for TTL expiry and cascade termination."""
+        """Check intents + deferrals for TTL expiry and cascade termination."""
         now = now or _now()
         responses: List[MessageEnvelope] = []
 
@@ -354,6 +379,24 @@ class SessionCoordinator:
             ):
                 intent.state_machine.transition("EXPIRED")
                 responses.extend(self._cascade_intent_termination(intent.intent_id))
+
+        # Deferrals are short-lived UX hints (default 60s); drop expired ones
+        # silently — clients render them with their own TTL countdown so a
+        # missed broadcast doesn't matter.
+        for deferral_id, deferral in list(self.deferrals.items()):
+            if deferral.expires_at is None:
+                continue
+            if now >= deferral.expires_at:
+                del self.deferrals[deferral_id]
+                responses.append(self._make_envelope(
+                    MessageType.INTENT_DEFERRED.value,
+                    {
+                        "deferral_id": deferral.deferral_id,
+                        "principal_id": deferral.principal_id,
+                        "status": "expired",
+                        "reason": "ttl",
+                    },
+                ))
 
         responses.extend(self._check_auto_dismiss())
         responses.extend(self.check_pending_claims(now))
@@ -890,6 +933,23 @@ class SessionCoordinator:
         if superseded_ids:
             responses.extend(self._check_auto_dismiss())
 
+        # If this principal had any open deferrals, drop them — they're no
+        # longer "yielding", they're now actively claiming work. Sibling
+        # tabs should remove the yield chip for this principal.
+        for deferral_id, deferral in list(self.deferrals.items()):
+            if deferral.principal_id != intent.principal_id:
+                continue
+            del self.deferrals[deferral_id]
+            responses.append(self._make_envelope(
+                MessageType.INTENT_DEFERRED.value,
+                {
+                    "deferral_id": deferral.deferral_id,
+                    "principal_id": deferral.principal_id,
+                    "status": "resolved",
+                    "reason": "principal_announced",
+                },
+            ))
+
         # Partial overlap warning (Section 18.6.2: SHOULD accept but MUST warn)
         if frozen_action == "warn":
             responses.append(self._make_protocol_error(
@@ -936,6 +996,93 @@ class SessionCoordinator:
             return []
         responses = self._cascade_intent_termination(intent_id)
         responses.extend(self._check_auto_dismiss())
+        responses.extend(self._cleanup_deferrals_for_terminated_intent(intent_id))
+        return responses
+
+    def _handle_intent_deferred(self, envelope: MessageEnvelope) -> List[MessageEnvelope]:
+        """Record an observation that a principal saw existing intents on
+        a scope and chose to yield without announcing one of their own.
+
+        Distinct from INTENT_ANNOUNCE: no scope claim, no work in progress,
+        no participation in conflict detection. The deferral is purely a
+        UX-level signal so siblings can see "Bob saw Alice editing db.py
+        and is yielding" — the kind of state that 4-29's "Conflicts panel
+        is empty even though Bob said he saw a conflict" UX gap was
+        complaining about.
+
+        TTL-bounded; auto-cleared when the observed intents all reach
+        terminal state (see :meth:`_cleanup_deferrals_for_terminated_intent`).
+
+        Re-broadcast verbatim — bridge will fan it out to all participants.
+        """
+        scope_data = envelope.payload.get("scope")
+        scope = Scope.from_dict(scope_data) if isinstance(scope_data, dict) else scope_data
+        deferral_id = envelope.payload.get("deferral_id") or str(uuid.uuid4())
+        ttl_sec = float(envelope.payload.get("ttl_sec", 60.0))
+        now = _now()
+        deferral = Deferral(
+            deferral_id=deferral_id,
+            principal_id=envelope.sender.principal_id,
+            scope=scope,
+            reason=envelope.payload.get("reason", "yielded"),
+            observed_intent_ids=list(envelope.payload.get("observed_intent_ids", []) or []),
+            observed_principals=list(envelope.payload.get("observed_principals", []) or []),
+            received_at=now,
+            expires_at=now + timedelta(seconds=ttl_sec),
+        )
+        # Replace any existing deferral with the same id (idempotent retries).
+        self.deferrals[deferral.deferral_id] = deferral
+
+        return [self._make_envelope(
+            MessageType.INTENT_DEFERRED.value,
+            {
+                "deferral_id": deferral.deferral_id,
+                "principal_id": deferral.principal_id,
+                "scope": (
+                    deferral.scope.to_dict() if hasattr(deferral.scope, "to_dict")
+                    else deferral.scope
+                ),
+                "reason": deferral.reason,
+                "observed_intent_ids": deferral.observed_intent_ids,
+                "observed_principals": deferral.observed_principals,
+                "expires_at": deferral.expires_at.isoformat() if deferral.expires_at else None,
+            },
+        )]
+
+    def _cleanup_deferrals_for_terminated_intent(
+        self, terminated_intent_id: str,
+    ) -> List[MessageEnvelope]:
+        """When an intent enters a terminal state, drop any deferral that
+        was watching it (and only it). If a deferral observed multiple
+        intents and at least one is still alive, keep the deferral —
+        the principal is still yielding to someone.
+        """
+        responses: List[MessageEnvelope] = []
+        for deferral_id, deferral in list(self.deferrals.items()):
+            if terminated_intent_id not in deferral.observed_intent_ids:
+                continue
+            still_alive = [
+                iid for iid in deferral.observed_intent_ids
+                if iid != terminated_intent_id
+                and self.intents.get(iid) is not None
+                and not self.intents[iid].state_machine.is_terminal()
+            ]
+            if still_alive:
+                # Other intents still alive — keep deferral, just trim list.
+                deferral.observed_intent_ids = still_alive
+                continue
+            # All observed intents are gone. Drop the deferral and tell
+            # everyone it's resolved.
+            del self.deferrals[deferral_id]
+            responses.append(self._make_envelope(
+                MessageType.INTENT_DEFERRED.value,
+                {
+                    "deferral_id": deferral.deferral_id,
+                    "principal_id": deferral.principal_id,
+                    "status": "resolved",
+                    "reason": "observed_intents_terminated",
+                },
+            ))
         return responses
 
     def _handle_intent_claim(self, envelope: MessageEnvelope) -> List[MessageEnvelope]:

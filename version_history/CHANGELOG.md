@@ -18,7 +18,8 @@ version_history/
 ├── v0.1.10_execution_governance_closure/  ← v0.1.10 spec snapshot, update record, and changeset
 ├── v0.1.11_example_and_schema_alignment/  ← v0.1.11 spec snapshot, update record, and changeset
 ├── v0.1.12_conformance_closure/           ← v0.1.12 spec snapshot and update record
-└── v0.1.13_backend_health_monitoring/     ← v0.1.13 spec snapshot and update record
+├── v0.1.13_backend_health_monitoring/     ← v0.1.13 spec snapshot and update record
+└── v0.1.14_intent_deferred/               ← v0.1.14 spec snapshot and update record
 ```
 
 The current source of truth is always **SPEC.md** in the project root.
@@ -405,6 +406,29 @@ Engineering-only release: the MPAC protocol core is now available as a pip-insta
 - `mpac-starter-kit.zip`: self-contained distribution (`.whl` + `run.py` + `README.txt`) for collaborators
 - ngrok compatibility: agent auto-detects ngrok URLs and adds `ngrok-skip-browser-warning` header
 - End-to-end validated: both agents connect, read workspace, announce intents, detect conflicts, generate fixes via Claude, commit with state_ref tracking, see each other's changes in real-time
+
+---
+
+## v0.1.14 — INTENT_DEFERRED (2026-04-28)
+
+New optional message type — `INTENT_DEFERRED` — a non-claiming "yield" signal that lets a participant record *"I saw an active intent on this scope and chose to step back"* without announcing a competing intent. Pure UX affordance: lets the human owner see cooperative deference (e.g. *"Bob saw Alice editing X and stepped back"*) instead of either polluting the conflict surface with non-conflicts or hiding the social fact entirely. Strictly additive — no existing message type, field, or state transition is changed.
+
+**Key changes:**
+- New SPEC §15.5.1 + §13.1 payload table: `INTENT_DEFERRED` with two payload shapes sharing one `message_type` — an **active form** sent by the deferring participant (carries `deferral_id`, `scope`, optional `observed_intent_ids` / `observed_principals` / `reason` / `ttl_sec`) and a **resolution form** emitted only by the coordinator (carries `deferral_id`, `principal_id`, `status: resolved | expired`, optional `reason`).
+- Coordinator MUST fill `principal_id` and `expires_at` (= `received_at + ttl_sec`, default 60s) when re-broadcasting the active form.
+- **Three-axis cleanup rule** — coordinator MUST emit a `status: resolved` follow-up when ANY of: (1) all intents in `observed_intent_ids` reach a terminal state; (2) the same `principal_id` subsequently sends `INTENT_ANNOUNCE`; (3) the terminating intent's `principal_id` appears in `observed_principals` OR `observed_intent_ids` (defense-in-depth match for clients that conflated the two fields). When wall-clock exceeds `expires_at`, emit `status: expired`.
+- **Non-properties (explicitly defined):** `INTENT_DEFERRED` is NOT an intent — no state machine entry, does not lock scope, MUST NOT trigger overlap detection or `CONFLICT_REPORT`, MUST NOT block the same principal's subsequent `INTENT_ANNOUNCE`. Distinct from both `INTENT_ANNOUNCE` (no scope claim) and `CONFLICT_REPORT` (no opposing pair).
+- **Compliance profile:** `INTENT_DEFERRED` is **not** in any profile's MUST set (Core / Governance / Semantic). It is an optional UX-affordance message — implementations that surface a "yielded" hint in their UI SHOULD support it.
+- Protocol version bump 0.1.13 → 0.1.14 across SPEC.md (header, body, all example envelopes) and `MPAC_Developer_Reference.md` (title). The historical retrospective in SPEC §28 (`"addressed across v0.1.1–v0.1.13"`) is intentionally **not** extended, because v0.1.14 adds a new feature rather than closing a previously identified gap.
+- **Spec/package version decoupling:** prior drafts of this feature carried a `(v0.2.5+)` tag in SPEC body, mixing protocol version and Python package (`mpac` PyPI) version. SPEC.md now refers only to protocol versions (e.g. `(v0.1.14+)`); reference-implementation availability (`mpac` ≥ 0.2.5, `mpac-mcp` ≥ 0.2.9) is recorded in the Update Record only.
+- `MPAC_Developer_Reference.md` updated in 11 locations: §2 message roster (added row + ⚪ optional marker + footnote), new §3.7.1 payload section, §4 entity diagram, §4.1 cross-reference table (3 new rows), §5.1 / §5.4 cascade notes, §6.4 compliance footnote, new §6.9 Deferral Status enum registry, new §8.15 protocol semantics summary, §9 implementation checklist (new "v0.1.14 INTENT_DEFERRED" group).
+
+**Contents:**
+
+| File | Description |
+|------|-------------|
+| `SPEC_v0.1.14_2026-04-28.md` | Archived SPEC.md snapshot of the v0.1.14 spec |
+| `MPAC_v0.1.14_Update_Record.md` | Detailed update record: motivation, payload schemas, three-axis cleanup rule, non-properties, compatibility, and the spec-vs-package version decoupling rationale |
 
 ---
 

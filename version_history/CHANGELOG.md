@@ -432,6 +432,33 @@ New optional message type — `INTENT_DEFERRED` — a non-claiming "yield" signa
 
 ---
 
+## v0.1.15 — Cross-Principal Scope Race Lock (2026-04-29)
+
+Tightens `INTENT_ANNOUNCE` arrival semantics: cross-principal same-resource collisions are now hard-rejected with a new `STALE_INTENT` error code instead of producing an advisory `CONFLICT_REPORT(category="scope_overlap")`. Mirrors source-control's split between **merge conflicts** (must resolve before push) and **semantic conflicts** (warn, defer to CI). Cross-file `dependency_breakage` candidates remain advisory — auto-rejecting every dependent whenever a hub file is touched would block legitimate parallel work.
+
+Motivated by 2026-04-29 field testing with two LLM-driven Claude relays: the prior advisory model assumed agents would re-evaluate after seeing a `CONFLICT_REPORT`, but synchronous-blocking LLMs are already mid-write by the time the report arrives. The hard-reject path forces the loser into a structured "yield" flow before any write happens.
+
+**Key changes:**
+- New SPEC §15.3.2 (Cross-Principal Scope Race Lock): coordinator MUST reject `INTENT_ANNOUNCE` with `PROTOCOL_ERROR(STALE_INTENT)` when the proposed scope's resources overlap an active intent owned by a **different** principal. Rejected intent MUST NOT be registered; no `CONFLICT_REPORT` MUST fire (race lock pre-empts the advisory path). Rejection's `description` SHOULD identify the colliding `intent_id` and `principal_id` so the client can construct an `INTENT_DEFERRED` correctly.
+- **Same-vs-cross-file scope:** rule applies ONLY to direct resource overlap (would-be `scope_overlap`). `dependency_breakage` cross-file candidates remain advisory — keeps collaboration alive on hub modules where dependent edits are often backward-compatible.
+- **Same-principal exemption:** re-announcement by the same principal on the same scope is NOT race-locked; it goes through the auto-supersede path (treats prior intent as orphan from a crashed retry).
+- **Lock release:** bound to the holding intent's lifecycle. Withdraw / TTL / supersede / transfer all release the lock. Coordinator MUST NOT retain race-lock state beyond the holding intent's lifetime.
+- **Disambiguation from existing rejection codes:** `SCOPE_FROZEN` (Section 18.6.2, conflict-resolution timeout) and `INTENT_BACKOFF` (Section 15.3.1, post-RESOLUTION livelock prevention) are independent mechanisms with different recovery semantics. `STALE_INTENT` (Section 15.3.2) is none of those — it's bound to a peer's active intent lifecycle.
+- New `PROTOCOL_ERROR` code added to Section 22.1's recommended values list.
+- Section 15.5.1 (`INTENT_DEFERRED`) clarification: coordinator MUST evaluate the three-axis cleanup conditions both at **arrival time** (if any condition is already true, emit `status: resolved` in the same response that delivers the active broadcast) AND on subsequent intent-state transitions. Without arrival-time evaluation, a slow-yielding agent whose deferral arrives after the observed peer terminated would leave a stranded entry until TTL expiry. The original three-axis rules are unchanged.
+- **Intentionally out of scope (deferred to v0.2.x or later):** the deeper architectural limitation that LLM relay subprocesses do not subscribe to coordinator broadcasts (so the "first to announce" participant in a same-tick collision never learns it collided, and reply text can use stale `check_overlap` snapshots). Recorded in the Update Record as a known limitation.
+- Protocol version bump 0.1.14 → 0.1.15 (header + Status section). The historical retrospective in §28 is intentionally not extended (v0.1.15 tightens an existing message's arrival semantics rather than closing a previously identified gap).
+- `MPAC_Developer_Reference.md`: needs `STALE_INTENT` row in error code registry, plus a brief note on §15.3.2's race-lock semantics and same-principal exemption. (Update may lag; SPEC.md is source of truth.)
+
+**Contents:**
+
+| File | Description |
+|------|-------------|
+| `SPEC_v0.1.15_2026-04-29.md` | Archived SPEC.md snapshot of the v0.1.15 spec |
+| `MPAC_v0.1.15_Update_Record.md` | Detailed update record: motivation, the new `STALE_INTENT` code's distinction from `SCOPE_FROZEN` / `INTENT_BACKOFF`, the §15.3.2 normative rule, the §15.5.1 fast-resolve clarification, the explicitly-out-of-scope reactive event subscription limitation, and reference-implementation status (`mpac` 0.2.8, `mpac-mcp` 0.2.12; TypeScript still TODO) |
+
+---
+
 ## Archival Convention and Procedure
 
 When the user says "归档" or "archive the spec" or "参考 version history 里的 readme 把现有 spec 归档", follow this procedure exactly:

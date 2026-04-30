@@ -1,4 +1,4 @@
-# MPAC v0.1.14 Developer Reference
+# MPAC v0.1.15 Developer Reference
 
 面向实现者的技术参考文档。本文档以数据结构为中心，定义所有模块、字段、枚举值、状态机和模块间引用关系。
 
@@ -210,7 +210,7 @@ resource_registry.mappings[] → 每项包含：
 
 ## 2. 消息类型清单
 
-MPAC v0.1.14 共 22 种消息类型，分布在 Session / Intent / Operation / Conflict / Governance / Error 六类中。
+MPAC v0.1.15 共 22 种消息类型，分布在 Session / Intent / Operation / Conflict / Governance / Error 六类中。
 
 | 层 | 消息类型 | 方向 | Core Profile | Governance Profile |
 |----|---------|------|-------------|-------------------|
@@ -1072,6 +1072,7 @@ Deferral TTL 超时 ────────→ coordinator emit
 | `RESOLUTION_CONFLICT` | 同一冲突的重复裁决 | 已解决的 conflict 收到第二条 RESOLUTION（Section 18.4） |
 | `CAUSAL_GAP` | 因果缺口信号 | 参与者通过 watermark 检测到遗漏消息（Section 12.8） |
 | `INTENT_BACKOFF` | Intent 退避冷却中 | 冲突驱动拒绝后过早重新 announce 相同 scope（Section 15.3.1） |
+| `STALE_INTENT` *(v0.1.15+)* | 同文件 race lock 触发 | INTENT_ANNOUNCE 的 scope.resources 与**另一 principal**持有的 active intent 直接重叠（Section 15.3.2）。Same-principal 的同 scope 重 announce **不**触发本错误，走 auto-supersede。Cross-file `dependency_breakage` 候选**不**触发本错误，仍走 advisory `CONFLICT_REPORT` 路径 |
 | `BACKEND_SWITCH_DENIED` | 后端切换被拒绝 | 无法切换到请求的 AI 模型后端 |
 
 ### 6.9 Deferral Status *(v0.1.14+)*

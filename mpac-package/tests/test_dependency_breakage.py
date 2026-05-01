@@ -640,6 +640,66 @@ def test_precision_symmetric_direction():
     assert scope_dependency_conflict(alice, bob) is False
 
 
+def test_precision_bare_name_matches_fqn_tail():
+    """Real-world Claude case (REAL_USER_SCENARIOS.md 2.4):
+    agent declares ``affects_symbols=["Note"]`` (bare class name) but the
+    scanner emits ``impact_symbols=["models.Note"]`` (FQN). Without
+    tail-tolerance these never intersect and dep_breakage silently misses
+    the conflict.
+    """
+    alice = _scope_with(
+        ["models.py"],
+        impact=["db.py"],
+        impact_symbols={"db.py": ["models.Note"]},
+        affects_symbols=["Note"],
+    )
+    bob = _scope_with(["db.py"])
+    assert scope_dependency_conflict(alice, bob) is True
+
+
+def test_precision_fqn_matches_bare_name_tail():
+    """Symmetric to the above: scanner emits bare ``Note`` (uncommon but
+    possible for tightly-resolved imports), agent declares the FQN
+    ``models.Note``."""
+    alice = _scope_with(
+        ["models.py"],
+        impact=["db.py"],
+        impact_symbols={"db.py": ["Note"]},
+        affects_symbols=["models.Note"],
+    )
+    bob = _scope_with(["db.py"])
+    assert scope_dependency_conflict(alice, bob) is True
+
+
+def test_precision_different_tails_still_disjoint():
+    """Tail-tolerance must NOT collapse different names. ``Note`` and
+    ``User`` should stay disjoint even when both sides use bare names."""
+    alice = _scope_with(
+        ["models.py"],
+        impact=["db.py"],
+        impact_symbols={"db.py": ["models.User"]},
+        affects_symbols=["Note"],
+    )
+    bob = _scope_with(["db.py"])
+    assert scope_dependency_conflict(alice, bob) is False
+
+
+def test_detail_bare_name_matched_to_fqn_reports_fqn_form():
+    """When bare ``Note`` matches FQN ``models.Note`` via tail-tolerance,
+    the dependency detail should surface the more-qualified form so the
+    UI shows ``models.Note`` (not ``Note``)."""
+    alice = _scope_with(
+        ["models.py"],
+        impact=["db.py"],
+        impact_symbols={"db.py": ["models.Note"]},
+        affects_symbols=["Note"],
+    )
+    bob = _scope_with(["db.py"])
+    assert compute_dependency_detail(alice, bob) == {
+        "ab": [{"file": "db.py", "symbols": ["models.Note"]}]
+    }
+
+
 def test_precision_one_side_specific_other_side_wildcard_per_importer():
     """Multiple importers, mixed per-importer precision. Alice touches
     foo. api.py uses only bar (safe). docs.py is wildcard (conflict).

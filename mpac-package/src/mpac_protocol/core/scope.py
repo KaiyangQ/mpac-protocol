@@ -150,6 +150,45 @@ def _scope_impact_symbols(scope: Scope, importer: str) -> Optional[List[str]]:
     return [s for s in value if isinstance(s, str)]
 
 
+def _symbol_matches(affects: List[str], used: List[str]) -> List[str]:
+    """Match the editor's ``affects_symbols`` against the importer's
+    scanner-computed ``impact_symbols``, returning the names that overlap.
+
+    Two layers of matching:
+
+    1. Exact intersection (``utils.foo`` vs ``utils.foo``).
+    2. FQN tail-tolerance: a bare name on one side matches the last segment
+       of an FQN on the other (``Note`` vs ``models.Note``). The scanner
+       always emits FQN form (``models.Note``), but agent declarations
+       routinely use bare names — especially Claude when announcing
+       class-level edits. Without tail-tolerance, the bare-name case is
+       a silent miss.
+
+    When both sides agree on the same tail but with different qualifications,
+    the longer (more qualified) form is reported, so callers rendering UI
+    show ``models.Note`` not ``Note``.
+    """
+    matches = set(affects) & set(used)
+
+    # Index by tail so we can find cross-form matches (bare ↔ FQN).
+    affects_by_tail: Dict[str, str] = {}
+    for s in affects:
+        affects_by_tail[s.rsplit(".", 1)[-1]] = s
+    used_by_tail: Dict[str, str] = {}
+    for s in used:
+        used_by_tail[s.rsplit(".", 1)[-1]] = s
+
+    for tail in set(affects_by_tail) & set(used_by_tail):
+        a = affects_by_tail[tail]
+        u = used_by_tail[tail]
+        if a == u:
+            continue  # already in matches via exact path
+        # Prefer the more qualified (longer) form for display.
+        matches.add(a if len(a) >= len(u) else u)
+
+    return sorted(matches)
+
+
 def _symbols_actually_clash(
     editor_scope: Scope,
     importer_file: str,
@@ -162,7 +201,8 @@ def _symbols_actually_clash(
       * the editor didn't declare ``affects_symbols`` (assume they touch
         everything), OR
       * the scanner couldn't pin importer's symbols (wildcard import), OR
-      * the sets intersect — at least one symbol is both edited and used.
+      * the sets intersect — at least one symbol is both edited and used
+        (exact match OR FQN tail match, see ``_symbol_matches``).
 
     Returns False only when both sides have concrete symbol sets AND they
     are disjoint. That's the precision win.
@@ -175,7 +215,7 @@ def _symbols_actually_clash(
     if used is None:
         return True  # wildcard or missing → file-level fallback
 
-    return bool(set(affects) & set(used))
+    return bool(_symbol_matches(affects, used))
 
 
 def compute_dependency_detail(a: Scope, b: Scope) -> Dict[str, Any]:
@@ -236,7 +276,7 @@ def _direction_detail(
             # clash, so report file-level.
             entries.append({"file": f, "symbols": None})
         else:
-            clashing = sorted(set(affects) & set(used))
+            clashing = _symbol_matches(affects, used)
             entries.append({"file": f, "symbols": clashing or None})
     return entries
 

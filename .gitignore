@@ -72,3 +72,8 @@ deploy/scripts/.env
 *.key
 id_rsa
 id_ed25519
+
+# Local-only credentials / handoff notes for sharing context with another
+# AI session. Whole directory is gitignored so anything dropped here is
+# safe by default — DO NOT remove this rule.
+.local/

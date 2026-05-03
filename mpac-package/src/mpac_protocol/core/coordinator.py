@@ -162,6 +162,9 @@ class Claim:
     objective: str
     scope: Scope
     justification: Optional[str] = None
+    submitted_at: datetime = field(default_factory=_now)
+    decision: str = "pending"
+    approved_by: Optional[str] = None
 
 
 @dataclass

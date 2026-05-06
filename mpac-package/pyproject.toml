@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mpac"
-version = "0.2.9"
+version = "0.2.10"
 description = "MPAC (Multi-Principal Agent Coordination Protocol) — coordinate multiple AI agents serving different principals over shared state"
 readme = "README.md"
 requires-python = ">=3.9"

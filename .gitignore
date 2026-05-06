@@ -52,6 +52,8 @@ examples/two_machine_demo/host/workspace/meeting-notes.md
 # Web app: local dev artifacts
 web-app/.venv/
 web-app/api/mpac_web.db
+web-app/api/mpac_web.db-shm
+web-app/api/mpac_web.db-wal
 web-app/app/.next/
 web-app/app/.env.local
 # (node_modules already covered by top-level rule)
@@ -77,3 +79,4 @@ id_ed25519
 # AI session. Whole directory is gitignored so anything dropped here is
 # safe by default — DO NOT remove this rule.
 .local/
+web-app/api/tmp/

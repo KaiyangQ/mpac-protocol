@@ -934,6 +934,14 @@ class SessionCoordinator:
                 other_files = set(other.scope.resources or []) if other.scope and other.scope.resources else set()
                 clashing = proposed_files & other_files
                 if clashing:
+                    duplicate_candidate = self._build_duplicate_candidate(
+                        intent, other, sorted(clashing)
+                    )
+                    details = (
+                        {"duplicate_candidate": duplicate_candidate}
+                        if duplicate_candidate
+                        else None
+                    )
                     return [self._make_protocol_error(
                         "STALE_INTENT",
                         envelope.message_id,
@@ -941,6 +949,7 @@ class SessionCoordinator:
                         f"{other.intent_id} (principal {other.principal_id}). Call "
                         f"defer_intent and tell the user to wait, or retry once the "
                         f"other intent has withdrawn.",
+                        details=details,
                     )]
 
         # Auto-supersede prior ACTIVE intents from the SAME principal on
@@ -1808,7 +1817,13 @@ class SessionCoordinator:
             },
         )
 
-    def _make_protocol_error(self, error_code: str, refers_to: Optional[str], description: str) -> MessageEnvelope:
+    def _make_protocol_error(
+        self,
+        error_code: str,
+        refers_to: Optional[str],
+        description: str,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> MessageEnvelope:
         """Create a PROTOCOL_ERROR message."""
         payload: Dict[str, Any] = {
             "error_code": error_code,
@@ -1816,7 +1831,183 @@ class SessionCoordinator:
         }
         if refers_to:
             payload["refers_to"] = refers_to
+        if details:
+            payload.update(details)
         return self._make_envelope(MessageType.PROTOCOL_ERROR.value, payload)
+
+    @staticmethod
+    def _semantic_strings(value: Any) -> List[str]:
+        """Return non-empty strings from a string-or-list field."""
+        if isinstance(value, str):
+            stripped = value.strip()
+            return [stripped] if stripped else []
+        if isinstance(value, list):
+            out: List[str] = []
+            for item in value:
+                if isinstance(item, str) and item.strip():
+                    out.append(item.strip())
+            return out
+        return []
+
+    @staticmethod
+    def _normalize_semantic_text(value: str) -> str:
+        """Normalize free-text postconditions for conservative exact matching."""
+        lowered = value.strip().lower()
+        return re.sub(r"\s+", " ", lowered)
+
+    def _intent_semantic_summary(self, intent: Intent) -> Dict[str, Any]:
+        """Extract the structured intent hint carried in Scope.extensions.
+
+        This is intentionally an advisory layer. Missing or malformed fields
+        degrade to an empty summary; the race lock remains deterministic.
+        """
+        ext = intent.scope.extensions if intent.scope and intent.scope.extensions else {}
+        raw = ext.get("intent_semantics") if isinstance(ext, dict) else None
+        semantics = raw if isinstance(raw, dict) else {}
+
+        action = semantics.get("action")
+        action_text = (
+            action.strip().lower()
+            if isinstance(action, str) and action.strip()
+            else None
+        )
+
+        symbols: List[str] = []
+        symbols.extend(self._semantic_strings(semantics.get("symbol")))
+        symbols.extend(self._semantic_strings(semantics.get("symbols")))
+        symbols.extend(self._semantic_strings(
+            ext.get("affects_symbols") if isinstance(ext, dict) else None
+        ))
+
+        targets = semantics.get("targets")
+        if isinstance(targets, list):
+            for target in targets:
+                if not isinstance(target, dict):
+                    continue
+                symbols.extend(self._semantic_strings(target.get("symbol")))
+                symbols.extend(self._semantic_strings(target.get("symbols")))
+
+        postconditions: List[str] = []
+        raw_postconditions = semantics.get("postconditions")
+        if raw_postconditions is None and "postcondition" in semantics:
+            raw_postconditions = [semantics.get("postcondition")]
+        if isinstance(raw_postconditions, list):
+            for item in raw_postconditions:
+                if isinstance(item, str):
+                    postconditions.extend(self._semantic_strings(item))
+                elif isinstance(item, dict):
+                    for key in ("text", "behavior", "expected", "description"):
+                        postconditions.extend(self._semantic_strings(item.get(key)))
+
+        # Dedup while preserving order. Symbol matching is case-sensitive
+        # because code symbols generally are; postcondition matching is not.
+        seen_symbols = set()
+        clean_symbols: List[str] = []
+        for symbol in symbols:
+            if symbol in seen_symbols:
+                continue
+            seen_symbols.add(symbol)
+            clean_symbols.append(symbol)
+
+        seen_posts = set()
+        clean_posts: List[str] = []
+        normalized_posts: List[str] = []
+        for postcondition in postconditions:
+            normalized = self._normalize_semantic_text(postcondition)
+            if not normalized or normalized in seen_posts:
+                continue
+            seen_posts.add(normalized)
+            clean_posts.append(postcondition)
+            normalized_posts.append(normalized)
+
+        return {
+            "action": action_text,
+            "symbols": clean_symbols,
+            "postconditions": clean_posts,
+            "normalized_postconditions": normalized_posts,
+        }
+
+    def _build_duplicate_candidate(
+        self,
+        proposed: Intent,
+        holder: Intent,
+        shared_files: List[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Detect when a rejected same-file race may already satisfy the task.
+
+        The coordinator does not resolve the semantic question. It only emits
+        a narrow advisory when structured hints overlap enough to justify a
+        post-withdraw re-read before writing.
+        """
+        proposed_sem = self._intent_semantic_summary(proposed)
+        holder_sem = self._intent_semantic_summary(holder)
+
+        proposed_action = proposed_sem.get("action")
+        holder_action = holder_sem.get("action")
+        actions_compatible = (
+            not proposed_action
+            or not holder_action
+            or proposed_action == holder_action
+        )
+
+        proposed_symbols = set(proposed_sem.get("symbols") or [])
+        holder_symbols = set(holder_sem.get("symbols") or [])
+        matched_symbols = sorted(proposed_symbols & holder_symbols)
+        matched_postconditions: List[str] = []
+        if matched_symbols and actions_compatible:
+            confidence = (
+                "high"
+                if proposed_action and proposed_action == holder_action
+                else "medium"
+            )
+            reason = "same_symbol_and_action" if confidence == "high" else "same_symbol"
+        else:
+            proposed_posts = set(proposed_sem.get("normalized_postconditions") or [])
+            holder_posts = set(holder_sem.get("normalized_postconditions") or [])
+            matched_posts = proposed_posts & holder_posts
+            if not matched_posts or not actions_compatible:
+                return None
+            confidence = (
+                "high"
+                if proposed_action and proposed_action == holder_action
+                else "medium"
+            )
+            reason = "same_postcondition_and_action" if confidence == "high" else "same_postcondition"
+            matched_postconditions = [
+                postcondition
+                for postcondition, normalized in zip(
+                    proposed_sem.get("postconditions") or [],
+                    proposed_sem.get("normalized_postconditions") or [],
+                )
+                if normalized in matched_posts
+            ]
+
+        return {
+            "candidate": True,
+            "confidence": confidence,
+            "reason": reason,
+            "other_intent_id": holder.intent_id,
+            "other_principal_id": holder.principal_id,
+            "shared_files": shared_files,
+            "matched_symbols": matched_symbols,
+            "matched_postconditions": matched_postconditions,
+            "current": {
+                "action": proposed_action,
+                "symbols": proposed_sem.get("symbols") or [],
+                "postconditions": proposed_sem.get("postconditions") or [],
+            },
+            "other": {
+                "action": holder_action,
+                "symbols": holder_sem.get("symbols") or [],
+                "postconditions": holder_sem.get("postconditions") or [],
+            },
+            "verification_required": True,
+            "guidance": (
+                "After the current holder withdraws, re-read the shared file(s) "
+                "and verify whether your target symbol or postcondition is "
+                "already satisfied. If it is satisfied, do not write a duplicate change."
+            ),
+        }
 
     def _remember_message_id(self, message_id: str) -> None:
         """Track recently seen message IDs for snapshot continuity."""

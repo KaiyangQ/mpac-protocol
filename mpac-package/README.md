@@ -241,7 +241,7 @@ Single-session mode (`MPACServer(session_id="demo")`) is fully backward compatib
 ## Status
 
 **Draft / experimental.** The protocol is at v0.1.13. This package is
-at 0.2.0. Not yet stable for production interoperability — intended for
+at 0.2.9. Not yet stable for production interoperability — intended for
 reference implementations, research prototypes, and early ecosystem
 feedback.
 

@@ -154,7 +154,7 @@ def _symbol_matches(affects: List[str], used: List[str]) -> List[str]:
     """Match the editor's ``affects_symbols`` against the importer's
     scanner-computed ``impact_symbols``, returning the names that overlap.
 
-    Two layers of matching:
+    Three layers of matching:
 
     1. Exact intersection (``utils.foo`` vs ``utils.foo``).
     2. FQN tail-tolerance: a bare name on one side matches the last segment
@@ -163,6 +163,11 @@ def _symbol_matches(affects: List[str], used: List[str]) -> List[str]:
        routinely use bare names — especially Claude when announcing
        class-level edits. Without tail-tolerance, the bare-name case is
        a silent miss.
+    3. Class-field owner tolerance: a class field declaration such as
+       ``Note.archived`` matches an importer using the class symbol
+       ``notes_app.models.Note``. The owner collapse only applies when the
+       owner segment looks like a class name, so lowercase module/function
+       pairs such as ``utils.foo`` vs ``utils.bar`` stay disjoint.
 
     When both sides agree on the same tail but with different qualifications,
     the longer (more qualified) form is reported, so callers rendering UI
@@ -185,6 +190,29 @@ def _symbol_matches(affects: List[str], used: List[str]) -> List[str]:
             continue  # already in matches via exact path
         # Prefer the more qualified (longer) form for display.
         matches.add(a if len(a) >= len(u) else u)
+
+    def class_owner(symbol: str) -> Optional[str]:
+        parts = symbol.split(".")
+        if len(parts) < 2:
+            return None
+        owner = parts[-2]
+        if not owner or not owner[0].isupper():
+            return None
+        return ".".join(parts[:-1])
+
+    def same_symbol_or_tail(left: str, right: str) -> bool:
+        return left == right or left.rsplit(".", 1)[-1] == right.rsplit(".", 1)[-1]
+
+    for a in affects:
+        a_owner = class_owner(a)
+        for u in used:
+            u_owner = class_owner(u)
+            if a_owner and same_symbol_or_tail(a_owner, u):
+                matches.add(a)
+            if u_owner and same_symbol_or_tail(a, u_owner):
+                matches.add(u)
+            if a_owner and u_owner and same_symbol_or_tail(a_owner, u_owner):
+                matches.add(a if len(a) >= len(u) else u)
 
     return sorted(matches)
 

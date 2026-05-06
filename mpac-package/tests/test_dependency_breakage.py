@@ -684,6 +684,37 @@ def test_precision_different_tails_still_disjoint():
     assert scope_dependency_conflict(alice, bob) is False
 
 
+def test_precision_class_field_matches_imported_class_symbol():
+    """REAL_USER_SCENARIOS.md 2.4: adding ``Note.archived`` affects files
+    that import/use the ``Note`` class even though the scanner reports the
+    class symbol, not every individual field.
+    """
+    alice = _scope_with(
+        ["notes_app/models.py"],
+        impact=["notes_app/db.py"],
+        impact_symbols={"notes_app/db.py": ["notes_app.models.Note"]},
+        affects_symbols=["Note.archived"],
+    )
+    bob = _scope_with(["notes_app/db.py"])
+    assert scope_dependency_conflict(alice, bob) is True
+
+
+def test_detail_class_field_match_reports_field_symbol():
+    """When a field-level affect matches a class-level use, preserve the
+    specific field in dependency_detail so the UI can explain the risk.
+    """
+    alice = _scope_with(
+        ["notes_app/models.py"],
+        impact=["notes_app/db.py"],
+        impact_symbols={"notes_app/db.py": ["notes_app.models.Note"]},
+        affects_symbols=["Note.archived"],
+    )
+    bob = _scope_with(["notes_app/db.py"])
+    assert compute_dependency_detail(alice, bob) == {
+        "ab": [{"file": "notes_app/db.py", "symbols": ["Note.archived"]}]
+    }
+
+
 def test_detail_bare_name_matched_to_fqn_reports_fqn_form():
     """When bare ``Note`` matches FQN ``models.Note`` via tail-tolerance,
     the dependency detail should surface the more-qualified form so the

@@ -191,6 +191,15 @@ class Deferral:
     submitted_at: datetime = field(default_factory=_now)
     decision: str = "pending"
     approved_by: Optional[str] = None
+    # v0.2.13: distinguish "FIFO queue, will auto-continue" from
+    # "may be doing same target, will verify after holder withdraws"
+    # so siblings' UI can render the chip with the right label.
+    # Set by the deferring agent based on whether the prior STALE_INTENT
+    # response carried a duplicate_candidate. Allowed values: "queue"
+    # (default — same file, different work), "duplicate_yield" (same
+    # file, possibly same target). Older clients may emit None; treat
+    # as "queue" downstream for backward compatibility.
+    category: str = "queue"
 
 
 @dataclass
@@ -1073,6 +1082,16 @@ class SessionCoordinator:
         deferral_id = envelope.payload.get("deferral_id") or str(uuid.uuid4())
         ttl_sec = float(envelope.payload.get("ttl_sec", 60.0))
         now = _now()
+        # v0.2.13: read category from payload; fall back to "queue" so
+        # pre-0.2.22 mpac-mcp clients (which never set the field) still
+        # render with the new neutral chip rather than the legacy yield
+        # framing. The value lands in INTENT_DEFERRED broadcasts so all
+        # siblings' UIs can pick the right rendering.
+        raw_category = envelope.payload.get("category")
+        if isinstance(raw_category, str) and raw_category in {"queue", "duplicate_yield"}:
+            category = raw_category
+        else:
+            category = "queue"
         deferral = Deferral(
             deferral_id=deferral_id,
             principal_id=envelope.sender.principal_id,
@@ -1082,6 +1101,7 @@ class SessionCoordinator:
             observed_principals=list(envelope.payload.get("observed_principals", []) or []),
             received_at=now,
             expires_at=now + timedelta(seconds=ttl_sec),
+            category=category,
         )
         # Replace any existing deferral with the same id (idempotent retries).
         self.deferrals[deferral.deferral_id] = deferral
@@ -1099,6 +1119,9 @@ class SessionCoordinator:
                 "observed_intent_ids": deferral.observed_intent_ids,
                 "observed_principals": deferral.observed_principals,
                 "expires_at": deferral.expires_at.isoformat() if deferral.expires_at else None,
+                # v0.2.13: surface the queue vs duplicate split so frontend
+                # can pick the right chip rendering.
+                "category": deferral.category,
             },
         )]
 

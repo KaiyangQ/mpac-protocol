@@ -466,3 +466,94 @@ def test_defer_intent_does_not_create_conflict_or_intent():
     assert not _filter(responses, MessageType.CONFLICT_REPORT.value)
     # But the deferral envelope was emitted.
     assert _filter(responses, MessageType.INTENT_DEFERRED.value)
+
+
+# ── v0.2.13: category field on INTENT_DEFERRED ───────────────────────
+
+
+def _defer_payload(coord, principal, session_id, *, category=None,
+                   deferral_id="defer-cat-1"):
+    """Helper: defer + return the INTENT_DEFERRED payload (active record)."""
+    msg = principal.defer_intent(
+        session_id=session_id,
+        deferral_id=deferral_id,
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+        reason="yielded",
+        observed_intent_ids=["intent-alice-1"],
+        observed_principals=["alice"],
+        category=category,
+    )
+    responses = coord.process_message(msg)
+    deferred = [
+        r for r in responses
+        if r.get("message_type") == MessageType.INTENT_DEFERRED.value
+        and r.get("payload", {}).get("status") in (None, "active")
+    ]
+    assert deferred, "expected an active INTENT_DEFERRED broadcast"
+    return deferred[0].get("payload", {})
+
+
+def test_defer_intent_default_category_is_queue():
+    """v0.2.13: when the deferring agent doesn't pass category, the
+    coordinator broadcasts ``category="queue"`` so siblings render the
+    new neutral chip rather than the legacy yield framing."""
+    session_id = "sess-cat-default"
+    coord = SessionCoordinator(session_id, security_profile="open")
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+    coord.process_message(alice.announce_intent(
+        session_id=session_id,
+        intent_id="intent-alice-1",
+        objective="alice work",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+    ))
+
+    payload = _defer_payload(coord, bob, session_id, category=None)
+    assert payload.get("category") == "queue"
+
+
+def test_defer_intent_propagates_duplicate_yield_category():
+    """When the prior STALE_INTENT response had ``duplicate_candidate``,
+    the agent's defer_intent call should set
+    ``category="duplicate_yield"`` and the coordinator must propagate
+    it verbatim into INTENT_DEFERRED."""
+    session_id = "sess-cat-dup"
+    coord = SessionCoordinator(session_id, security_profile="open")
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+    coord.process_message(alice.announce_intent(
+        session_id=session_id,
+        intent_id="intent-alice-1",
+        objective="alice work",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+    ))
+
+    payload = _defer_payload(
+        coord, bob, session_id, category="duplicate_yield"
+    )
+    assert payload.get("category") == "duplicate_yield"
+
+
+def test_defer_intent_unknown_category_falls_back_to_queue():
+    """Defensive: a typo or unrecognised category from a buggy client
+    falls back to ``queue`` rather than poisoning the union type the
+    frontend reads."""
+    session_id = "sess-cat-bogus"
+    coord = SessionCoordinator(session_id, security_profile="open")
+    alice, hello_a = _make("alice", session_id)
+    bob, hello_b = _make("bob", session_id)
+    coord.process_message(hello_a)
+    coord.process_message(hello_b)
+    coord.process_message(alice.announce_intent(
+        session_id=session_id,
+        intent_id="intent-alice-1",
+        objective="alice work",
+        scope=Scope(kind="file_set", resources=["notes_app/db.py"]),
+    ))
+
+    payload = _defer_payload(coord, bob, session_id, category="bananas")
+    assert payload.get("category") == "queue"

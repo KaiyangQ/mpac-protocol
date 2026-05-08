@@ -179,6 +179,7 @@ class Participant:
         observed_intent_ids: Optional[list[str]] = None,
         observed_principals: Optional[list[str]] = None,
         ttl_sec: float = 60.0,
+        category: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Record an observation that you saw an existing intent on
         ``scope`` and chose to yield without announcing one of your own
@@ -189,6 +190,15 @@ class Participant:
         in conflict detection. Distinct from withdraw_intent: there's no
         intent to withdraw (you didn't announce). It's purely a UX hint
         so siblings can see "Bob saw Alice editing X and yielded".
+
+        ``category`` (v0.2.13+, optional): the calling agent's reason
+        category for yielding, used to drive sibling UI rendering.
+          - ``"queue"`` (default if unset on coordinator side): same
+            file but different work, agent will auto-continue when
+            holder withdraws. Frontend renders a "Queued behind X" chip.
+          - ``"duplicate_yield"``: same file and possibly same target,
+            agent will re-read and verify before writing. Frontend
+            renders a "Yielded — may be doing same target" chip.
         """
         payload: Dict[str, Any] = {
             "deferral_id": deferral_id,
@@ -200,6 +210,8 @@ class Participant:
             payload["observed_intent_ids"] = list(observed_intent_ids)
         if observed_principals:
             payload["observed_principals"] = list(observed_principals)
+        if category is not None:
+            payload["category"] = category
         return self._make(MessageType.INTENT_DEFERRED.value, session_id, payload)
 
     def claim_intent(

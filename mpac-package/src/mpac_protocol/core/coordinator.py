@@ -1855,6 +1855,64 @@ class SessionCoordinator:
         lowered = value.strip().lower()
         return re.sub(r"\s+", " ", lowered)
 
+    @staticmethod
+    def _resource_module_names(scope: Optional[Scope]) -> List[str]:
+        """Return dotted module names for Python file resources in a scope."""
+        modules: List[str] = []
+        if scope is None:
+            return modules
+        for resource in scope.resources or []:
+            if not isinstance(resource, str) or not resource.endswith(".py"):
+                continue
+            rel = resource.replace("\\", "/").lstrip("./")
+            stem = rel[:-3]
+            parts = [p for p in stem.split("/") if p]
+            if not parts:
+                continue
+            if parts[-1] == "__init__":
+                parts = parts[:-1]
+            if parts:
+                modules.append(".".join(parts))
+        return modules
+
+    def _objective_symbol_hints(self, intent: Intent) -> List[str]:
+        """Best-effort duplicate-target hints from the objective text.
+
+        Agents are encouraged to send structured ``intent_semantics``, but
+        real relay turns sometimes only send a human-readable objective. Pull
+        narrow code-looking names from that text so obvious same-file races
+        such as "add sort_by_recent()" still produce duplicate_candidate.
+        """
+        objective = intent.objective or ""
+        if not objective:
+            return []
+
+        raw: List[str] = []
+        patterns = [
+            r"\b([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?)\s*\(",
+            r"\b([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?)\b\s*"
+            r"(?:function|func|method|handler|endpoint|symbol|函数)",
+        ]
+        for pattern in patterns:
+            raw.extend(match.group(1) for match in re.finditer(pattern, objective))
+
+        modules = self._resource_module_names(intent.scope)
+        out: List[str] = []
+        seen = set()
+        for symbol in raw:
+            if symbol.endswith(".py"):
+                continue
+            if "." not in symbol and modules:
+                candidates = [f"{module}.{symbol}" for module in modules]
+            else:
+                candidates = [symbol]
+            for candidate in candidates:
+                if candidate in seen:
+                    continue
+                seen.add(candidate)
+                out.append(candidate)
+        return out
+
     def _intent_semantic_summary(self, intent: Intent) -> Dict[str, Any]:
         """Extract the structured intent hint carried in Scope.extensions.
 
@@ -1878,6 +1936,7 @@ class SessionCoordinator:
         symbols.extend(self._semantic_strings(
             ext.get("affects_symbols") if isinstance(ext, dict) else None
         ))
+        symbols.extend(self._objective_symbol_hints(intent))
 
         targets = semantics.get("targets")
         if isinstance(targets, list):

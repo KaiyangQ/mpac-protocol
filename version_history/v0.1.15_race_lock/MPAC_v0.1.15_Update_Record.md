@@ -235,5 +235,5 @@ Test coverage in `mpac-package/tests/`:
   motivation, design discussion with the project owner, implementation,
   and the field-testing that exposed the limitation now recorded as
   out-of-scope)
-- Test scenarios: `docs/CONFLICT_TEST_SCENARIOS.md` 场景 7–9 (race
+- Test scenarios: `docs/testing/conflict/CONFLICT_TEST_SCENARIOS.md` 场景 7–9 (race
   detection scenarios validating the new behavior end-to-end)

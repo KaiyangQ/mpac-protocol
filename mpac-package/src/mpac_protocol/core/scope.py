@@ -123,6 +123,22 @@ def _scope_affects_symbols(scope: Scope) -> Optional[List[str]]:
     return cleaned or None
 
 
+def _scope_depends_on_symbols(scope: Optional[Scope]) -> Optional[List[str]]:
+    """Pull planned external symbol dependencies declared by the importer.
+
+    These are symbols in OTHER files that the importer intends to call/use
+    after its edit. They complement ``impact_symbols``, which only reflects
+    what the importer currently uses before the write happens.
+    """
+    if scope is None or not scope.extensions:
+        return None
+    raw = scope.extensions.get("depends_on_symbols")
+    if not isinstance(raw, list):
+        return None
+    cleaned = [x for x in raw if isinstance(x, str) and x]
+    return cleaned or None
+
+
 def _scope_impact_symbols(scope: Scope, importer: str) -> Optional[List[str]]:
     """Pull the scanner-computed symbol list for a specific importer file.
 
@@ -148,6 +164,33 @@ def _scope_impact_symbols(scope: Scope, importer: str) -> Optional[List[str]]:
     if not isinstance(value, list):
         return None
     return [s for s in value if isinstance(s, str)]
+
+
+def _combined_importer_symbols(
+    editor_scope: Scope,
+    importer_file: str,
+    importer_scope: Optional[Scope],
+) -> Optional[List[str]]:
+    """Return current + planned symbols the importer uses from editor scope.
+
+    ``impact_symbols`` is computed from current source; ``depends_on_symbols``
+    is supplied by the importer for new calls it is about to add. ``None``
+    keeps the existing wildcard semantics.
+    """
+    used = _scope_impact_symbols(editor_scope, importer_file)
+    if used is None:
+        return None
+    planned = _scope_depends_on_symbols(importer_scope)
+    if not planned:
+        return used
+    seen = set()
+    combined: List[str] = []
+    for symbol in [*used, *planned]:
+        if symbol in seen:
+            continue
+        seen.add(symbol)
+        combined.append(symbol)
+    return combined
 
 
 def _symbol_matches(affects: List[str], used: List[str]) -> List[str]:
@@ -220,6 +263,7 @@ def _symbol_matches(affects: List[str], used: List[str]) -> List[str]:
 def _symbols_actually_clash(
     editor_scope: Scope,
     importer_file: str,
+    importer_scope: Optional[Scope] = None,
 ) -> bool:
     """Given that ``importer_file`` imports from ``editor_scope``'s files,
     decide whether the editor's planned changes actually affect a symbol
@@ -239,7 +283,7 @@ def _symbols_actually_clash(
     if affects is None:
         return True  # editor didn't declare → file-level fallback
 
-    used = _scope_impact_symbols(editor_scope, importer_file)
+    used = _combined_importer_symbols(editor_scope, importer_file, importer_scope)
     if used is None:
         return True  # wildcard or missing → file-level fallback
 
@@ -273,10 +317,10 @@ def compute_dependency_detail(a: Scope, b: Scope) -> Dict[str, Any]:
     b_impact = {normalize_path(r) for r in _scope_impact(b)}
 
     detail: Dict[str, Any] = {}
-    ab = _direction_detail(a, a_impact & b_resources)
+    ab = _direction_detail(a, a_impact & b_resources, b)
     if ab:
         detail["ab"] = ab
-    ba = _direction_detail(b, b_impact & a_resources)
+    ba = _direction_detail(b, b_impact & a_resources, a)
     if ba:
         detail["ba"] = ba
     return detail
@@ -285,6 +329,7 @@ def compute_dependency_detail(a: Scope, b: Scope) -> Dict[str, Any]:
 def _direction_detail(
     editor_scope: Scope,
     affected_files: set,
+    importer_scope: Optional[Scope] = None,
 ) -> List[Dict[str, Any]]:
     """For the given editor scope and the set of consumer files they
     touch, return one entry per file with the clashing-symbol intersection
@@ -297,7 +342,7 @@ def _direction_detail(
         if affects is None:
             entries.append({"file": f, "symbols": None})
             continue
-        used = _scope_impact_symbols(editor_scope, f)
+        used = _combined_importer_symbols(editor_scope, f, importer_scope)
         if used is None:
             # Importer wildcard (``import X`` with bare use) — even with
             # ``affects_symbols`` we can't pin which symbols actually
@@ -339,12 +384,12 @@ def scope_dependency_conflict(a: Scope, b: Scope) -> bool:
 
     # Direction 1: a's edits reach a file b is claiming
     for f in a_impact & b_resources:
-        if _symbols_actually_clash(a, f):
+        if _symbols_actually_clash(a, f, b):
             return True
 
     # Direction 2: b's edits reach a file a is claiming
     for f in b_impact & a_resources:
-        if _symbols_actually_clash(b, f):
+        if _symbols_actually_clash(b, f, a):
             return True
 
     return False

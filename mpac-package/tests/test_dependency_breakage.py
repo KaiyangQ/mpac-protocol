@@ -539,6 +539,7 @@ def _scope_with(
     impact=None,
     impact_symbols=None,
     affects_symbols=None,
+    depends_on_symbols=None,
 ):
     """Test helper — build a scope with any v0.2.1 / v0.2.2 extensions."""
     ext = {}
@@ -548,6 +549,8 @@ def _scope_with(
         ext["impact_symbols"] = impact_symbols
     if affects_symbols is not None:
         ext["affects_symbols"] = affects_symbols
+    if depends_on_symbols is not None:
+        ext["depends_on_symbols"] = depends_on_symbols
     return Scope(
         kind="file_set",
         resources=list(resources),
@@ -570,6 +573,30 @@ def test_precision_no_conflict_when_symbols_disjoint():
     )
     bob = _scope_with(["main.py"])
     assert scope_dependency_conflict(alice, bob) is False
+
+
+def test_planned_dependency_symbol_restores_future_use_conflict():
+    """If the importer is about to add a NEW call, current source will not
+    show that symbol yet. ``depends_on_symbols`` lets the importer declare
+    the future dependency so the coordinator still warns.
+    """
+    alice = _scope_with(
+        ["notes_app/db.py"],
+        impact=["notes_app/api.py"],
+        impact_symbols={"notes_app/api.py": ["notes_app.db.save"]},
+        affects_symbols=["notes_app.db.sort_by_recent"],
+    )
+    carol = _scope_with(
+        ["notes_app/api.py"],
+        depends_on_symbols=["notes_app.db.sort_by_recent"],
+    )
+    assert scope_dependency_conflict(alice, carol) is True
+    assert compute_dependency_detail(alice, carol) == {
+        "ab": [{
+            "file": "notes_app/api.py",
+            "symbols": ["notes_app.db.sort_by_recent"],
+        }]
+    }
 
 
 def test_precision_conflict_when_symbols_match():
@@ -641,7 +668,7 @@ def test_precision_symmetric_direction():
 
 
 def test_precision_bare_name_matches_fqn_tail():
-    """Real-world Claude case (REAL_USER_SCENARIOS.md 2.4):
+    """Real-world Claude case (REAL_USER_SCENARIOS_STANDARD_TEST_FLOW.md 2.4):
     agent declares ``affects_symbols=["Note"]`` (bare class name) but the
     scanner emits ``impact_symbols=["models.Note"]`` (FQN). Without
     tail-tolerance these never intersect and dep_breakage silently misses
@@ -685,7 +712,7 @@ def test_precision_different_tails_still_disjoint():
 
 
 def test_precision_class_field_matches_imported_class_symbol():
-    """REAL_USER_SCENARIOS.md 2.4: adding ``Note.archived`` affects files
+    """REAL_USER_SCENARIOS_STANDARD_TEST_FLOW.md 2.4: adding ``Note.archived`` affects files
     that import/use the ``Note`` class even though the scanner reports the
     class symbol, not every individual field.
     """

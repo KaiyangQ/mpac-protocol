@@ -10,5 +10,5 @@ except ImportError:
     # server, or MCP bridge layers.
     MPACAgent = None  # type: ignore[assignment,misc]
 
-__version__ = "0.2.11"
+__version__ = "0.2.12"
 __all__ = ["MPACServer", "MPACAgent"]

@@ -165,6 +165,37 @@ def test_affects_symbols_alone_can_flag_medium_confidence_duplicate_candidate():
     assert candidate["matched_symbols"] == ["notes_app.db.sort_by_recent"]
 
 
+def test_objective_symbol_hint_flags_duplicate_when_agent_omits_semantics():
+    """Relay agents sometimes omit structured hints but put the function
+    name in the objective. Keep obvious same-function races discoverable.
+    """
+    session_id = "sess-semantics-objective"
+    coord = SessionCoordinator(session_id, security_profile="open")
+    alice, hello_alice = _make("alice", session_id)
+    bob, hello_bob = _make("bob", session_id)
+    coord.process_message(hello_alice)
+    coord.process_message(hello_bob)
+
+    plain_scope = Scope(kind="file_set", resources=["notes_app/db.py"])
+    coord.process_message(alice.announce_intent(
+        session_id,
+        "intent-alice",
+        "add sort_by_recent() function",
+        plain_scope,
+    ))
+    payload = _stale_payload(coord.process_message(bob.announce_intent(
+        session_id,
+        "intent-bob",
+        "add sort_by_recent function to db.py",
+        plain_scope,
+    )))
+
+    candidate = payload.get("duplicate_candidate")
+    assert candidate is not None
+    assert candidate["reason"] == "same_symbol"
+    assert candidate["matched_symbols"] == ["notes_app.db.sort_by_recent"]
+
+
 def test_same_postcondition_without_symbol_flags_duplicate_candidate():
     session_id = "sess-semantics-4"
     coord = SessionCoordinator(session_id, security_profile="open")
